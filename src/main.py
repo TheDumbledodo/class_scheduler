@@ -37,7 +37,7 @@ def main():
     print(scheduler.class_schedules)
     print(scheduler.exams)
 
-    valid_combinations = scheduler.get_valid_combinations()
+    valid_combinations = scheduler.get_top_combinations()
 
     print()
     print("Valid combinations:")

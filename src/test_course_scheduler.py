@@ -72,7 +72,7 @@ class TestCourseScheduler(unittest.TestCase):
         self.assertEqual(sorted_combo, (1, 2, 3, 4))
 
     def test_get_valid_combinations(self):
-        valid_combos = self.scheduler.get_valid_combinations()
+        valid_combos = self.scheduler.get_top_combinations()
 
         for combo in valid_combos:
             self.assertFalse(self.scheduler.has_conflict(combo))

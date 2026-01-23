@@ -30,13 +30,11 @@ class CourseScheduler:
 
         return result
 
-    def get_valid_combinations(self):
+    def get_top_combinations(self, top_n=3):
         course_ids = list(self.courses.keys())
 
         r = len(course_ids)
-
-        best_score = -1
-        best_combinations = []
+        all_valid_combos = []
 
         for combo in combinations(course_ids, r):
 
@@ -45,14 +43,12 @@ class CourseScheduler:
 
             score = self.get_chain_score(combo)
 
-            if score > best_score:
-                best_score = score
-                best_combinations = [combo]
+            all_valid_combos.append((score, combo))
 
-            elif score == best_score:
-                best_combinations.append(combo)
+        all_valid_combos.sort(key=lambda x: x[0], reverse=True)
+        top_combos = [self.sort_combo(combo) for score, combo in all_valid_combos[:top_n]]
 
-        return [self.sort_combo(combo) for combo in best_combinations]
+        return top_combos
 
     def get_chain_score(self, combo):
         score = 0
