@@ -47,13 +47,16 @@ def main():
 
         for cid in combo:
             course = filtered_courses[cid]
+
             class_code = course.get("كد ارائه کلاس درس", "—")
+            class_name = course.get("نام درس", "—")
+
             instructor = course.get("استاد", "—")
 
             schedule = course.get("زمانبندي تشکيل کلاس") or course.get("نام كلاس درس")
             exam = course.get("زمان امتحان")
 
-            print(f"{instructor} | {format_exam_schedule(exam)} | {format_class_schedule(schedule)} | {class_code}  • ")
+            print(f"{class_name} | {instructor} | {format_class_schedule(schedule)} | {class_code}  • ")
 
 if __name__ == '__main__':
     main()

@@ -1,4 +1,6 @@
-from itertools import combinations
+from collections import defaultdict
+from itertools import combinations, product
+
 
 class CourseScheduler:
 
@@ -17,6 +19,13 @@ class CourseScheduler:
         self.class_schedules = self.collect_by_id(self.extract_class_schedule)
         self.exams = self.collect_by_id(self.extract_exam)
 
+        self.groups = defaultdict(list)
+
+        for course_id, course in self.courses.items():
+            field_id = course.get("كد درس")
+
+            self.groups[field_id].append(course_id)
+
     def collect_by_id(self, extractor):
         result = {}
 
@@ -31,24 +40,24 @@ class CourseScheduler:
         return result
 
     def get_top_combinations(self, top_n=3):
-        course_ids = list(self.courses.keys())
+        groups = list(self.groups.values())
 
-        r = len(course_ids)
         all_valid_combos = []
 
-        for combo in combinations(course_ids, r):
+        for combo in product(*groups):
 
             if self.has_conflict(combo):
                 continue
 
             score = self.get_chain_score(combo)
-
             all_valid_combos.append((score, combo))
 
         all_valid_combos.sort(key=lambda x: x[0], reverse=True)
-        top_combos = [self.sort_combo(combo) for score, combo in all_valid_combos[:top_n]]
 
-        return top_combos
+        return [
+            self.sort_combo(combo)
+            for score, combo in all_valid_combos[:top_n]
+        ]
 
     def get_chain_score(self, combo):
         score = 0
@@ -138,4 +147,4 @@ class CourseScheduler:
             return False
 
         gap = abs(b["start"] - a["end"])
-        return gap <= 30
+        return gap <= 45

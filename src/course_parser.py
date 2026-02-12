@@ -3,11 +3,11 @@ from bs4 import BeautifulSoup
 
 WEEKDAYS = [
     "شنبه",
-    "يكشنبه",
+    "یکشنبه",
     "دوشنبه",
-    "سه‌شنبه",
+    "سه شنبه",
     "چهارشنبه",
-    "پنج‌شنبه",
+    "پنج شنبه",
     "جمعه",
 ]
 
@@ -55,15 +55,18 @@ def parse_courses(table):
     return courses
 
 def parse_value(value):
+    value = normalize_text(value)
 
     if value.isdigit():
         return int(value)
 
-    exam_schedule = re.match(r"(\d{4}/\d{2}/\d{2}) از (\d{2}:\d{2}) تا (\d{2}:\d{2})", value)
+    exam_schedule = re.match(
+        r"(\d{4}/\d{2}/\d{2}) از (\d{2}:\d{2}) تا (\d{2}:\d{2})",
+        value
+    )
 
     if exam_schedule:
         date, start, end = exam_schedule.groups()
-
         return (
             date,
             time_to_minutes(start),
@@ -71,7 +74,7 @@ def parse_value(value):
         )
 
     class_schedule = re.match(
-        r"(شنبه|يكشنبه|دوشنبه|سه‌شنبه|چهارشنبه|پنج‌شنبه|جمعه)\s+"
+        r"(شنبه|یکشنبه|دوشنبه|سه\s*شنبه|چهارشنبه|پنج\s*شنبه|جمعه)\s+"
         r"(?:از\s*)?"
         r"(\d{1,2}[:.]?\d{0,2})\s*(?:تا|الی)\s*(\d{1,2}[:.]?\d{2})",
         value
@@ -79,7 +82,6 @@ def parse_value(value):
 
     if class_schedule:
         weekday, start, end = class_schedule.groups()
-
         return (
             WEEKDAYS.index(weekday),
             time_to_minutes(start),
@@ -87,6 +89,14 @@ def parse_value(value):
         )
 
     return value
+
+def normalize_text(text: str) -> str:
+    return (
+        text.strip()
+        .replace('\u200c', ' ')
+        .replace('ي', 'ی')
+        .replace('ك', 'ک')
+    )
 
 def time_to_minutes(time):
     if ":" in time:
