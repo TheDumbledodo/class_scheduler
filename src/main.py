@@ -46,20 +46,11 @@ def main():
             99092
         ]
     }
-    filtered_courses = filter_courses(all_courses, class_id_filters)
+    filtered_courses = filter_courses(all_courses, class_name_filters)
 
-    print("Filtered courses:")
-
-    for course_id, course in filtered_courses.items():
-        print(f"{course} :{course_id}")
-
-    print()
-    print("Class/Exam schedules:")
+    print(f"Found {len(filtered_courses)} out of {len(all_courses)} courses.")
 
     scheduler = CourseScheduler(filtered_courses)
-    print(scheduler.class_schedules)
-    print(scheduler.exams)
-
     valid_combinations = scheduler.get_top_combinations()
 
     print()
