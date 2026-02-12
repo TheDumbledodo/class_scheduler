@@ -1,6 +1,6 @@
 import os
 
-from course_parser import parse_courses_with_columns, format_class_schedule, format_exam_schedule
+from course_parser import parse_courses_with_columns, format_class_schedule
 from course_filter import filter_courses
 from course_scheduler import CourseScheduler
 
@@ -22,8 +22,31 @@ def main():
                 all_courses[course_id] = course
                 course_id += 1
 
-    filters = {'كد درس': [7000002171, 7000020525, 1803185334]}
-    filtered_courses = filter_courses(all_courses, filters)
+    class_name_filters = {'نام درس': [
+        "معماری کامپیوتری پیشرفته",
+        "مدارهای الکتریکی و الکترونیکی",
+        "طراحی الگوریتم ها",
+        "نظریه زبان ها و ماشین ها",
+        "هوش مصنوعی",
+        "داده کاوی",
+        "آزمایشگاه مدارهای الکتریکی و الکترونیکی",
+        "آزمایشگاه فیزیک 2",
+        "زبان انگلیسی عمومی-ترکیبی(3)",
+    ]}
+    class_id_filters = {
+        'کد درس': [
+            7000038449,
+            7000031539,
+            7000031559,
+            7000031543,
+            7000031545,
+            7000031565,
+            7000031555,
+            7000031533,
+            99092
+        ]
+    }
+    filtered_courses = filter_courses(all_courses, class_id_filters)
 
     print("Filtered courses:")
 
@@ -45,18 +68,26 @@ def main():
     for i, combo in enumerate(valid_combinations, start=1):
         print(f"\nCombination {i}:")
 
+        total_credits = 0
+
         for cid in combo:
             course = filtered_courses[cid]
 
-            class_code = course.get("كد ارائه کلاس درس", "—")
+            class_credit = course.get("تعداد واحد نظری", 0) + course.get("تعداد واحد عملی", 0)
+            total_credits += class_credit
+
+            class_code = course.get("کد ارائه کلاس درس", "—")
             class_name = course.get("نام درس", "—")
 
             instructor = course.get("استاد", "—")
 
-            schedule = course.get("زمانبندي تشکيل کلاس") or course.get("نام كلاس درس")
-            exam = course.get("زمان امتحان")
+            schedule = course.get("زمانبندی تشکیل کلاس") or course.get("نام کلاس درس")
 
             print(f"{class_name} | {instructor} | {format_class_schedule(schedule)} | {class_code}  • ")
+
+        print()
+        print("Total credit:", total_credits)
+
 
 if __name__ == '__main__':
     main()

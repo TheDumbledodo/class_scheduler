@@ -27,7 +27,7 @@ def parse_table_columns(table):
     columns = []
 
     for th in table.thead.tr.find_all("th"):
-        text = th.get_text(strip=True)
+        text = normalize_text(th.get_text(strip=True))
 
         columns.append(text)
 
@@ -42,7 +42,7 @@ def parse_courses(table):
         columns_iter = iter(columns)
 
         for td in tr.find_all("td"):
-            column = next(columns_iter).strip()
+            column = normalize_text(next(columns_iter)).strip()
 
             if not column or td.find("img"):
                 continue

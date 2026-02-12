@@ -8,7 +8,7 @@ class CourseScheduler:
         self.courses = {}
 
         for course_id, course in courses.items():
-            has_schedule = course.get("زمانبندي تشکيل کلاس") or course.get("نام كلاس درس")
+            has_schedule = course.get("زمانبندی تشکیل کلاس") or course.get("نام کلاس درس")
             has_exam = course.get("زمان امتحان")
 
             if not has_schedule or not has_exam:
@@ -22,7 +22,7 @@ class CourseScheduler:
         self.groups = defaultdict(list)
 
         for course_id, course in self.courses.items():
-            field_id = course.get("كد درس")
+            field_id = course.get("کد درس")
 
             self.groups[field_id].append(course_id)
 
@@ -127,7 +127,7 @@ class CourseScheduler:
 
     @staticmethod
     def extract_class_schedule(course_id, course):
-        schedule = course.get("زمانبندي تشکيل کلاس") or course.get("نام كلاس درس")
+        schedule = course.get("زمانبندی تشکیل کلاس") or course.get("نام کلاس درس")
 
         if not schedule or len(schedule) < 3:
             return None

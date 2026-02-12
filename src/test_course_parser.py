@@ -105,7 +105,7 @@ class TestCourseParser(unittest.TestCase):
                 </tr>
                 <tr>
                     <td>102</td>
-                    <td>يكشنبه 9:00 تا 10:30</td>
+                    <td>یکشنبه 9:00 تا 10:30</td>
                     <td>1404/10/12 از 13:00 تا 15:00</td>
                 </tr>
             </tbody>
