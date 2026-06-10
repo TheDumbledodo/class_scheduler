@@ -4,16 +4,17 @@ from course_parser import parse_courses_with_columns, format_class_schedule
 from course_filter import filter_courses
 from course_scheduler import CourseScheduler
 
-FILES_DIR = "./files/"
+COURSES_DIR = "./courses/"
+
 
 def main():
-    files = os.listdir(FILES_DIR)
+    courses_file = os.listdir(COURSES_DIR)
 
     course_id = 1
     all_courses = {}
 
-    for path in files:
-        abs_path = os.path.join(FILES_DIR, path)
+    for path in courses_file:
+        abs_path = os.path.join(COURSES_DIR, path)
 
         with open(abs_path, encoding="utf-8") as file:
             columns, courses = parse_courses_with_columns(file.read())
@@ -35,23 +36,24 @@ def main():
     ]}
     class_id_filters = {
         'کد درس': [
-            7000038449,
-            7000031539,
-            7000031559,
-            7000031543,
-            7000031545,
-            7000031565,
-            7000031555,
-            7000031533,
-            99092
+            7000038449,  # "معماری کامپیوتری پیشرفته"
+            7000031539,  # "مدارهای الکتریکی و الکترونیکی"
+            7000031559,  # "طراحی الگوریتم ها"
+            7000031543,  # "نظریه زبان ها و ماشین ها"
+            7000031545,  # "هوش مصنوعی"
+            7000031565,  # "داده کاوی"
+            # 7000031555,  # "آزمایشگاه مدارهای الکتریکی و الکترونیکی"
+            # 7000031533,  # "آزمایشگاه فیزیک 2"
+            # 99092  # "زبان انگلیسی عمومی-ترکیبی(3)"
         ]
     }
-    filtered_courses = filter_courses(all_courses, class_name_filters)
 
-    print(f"Found {len(filtered_courses)} out of {len(all_courses)} courses.")
+    filtered_courses = filter_courses(all_courses, class_id_filters)
+
+    print(f"Found {len(filtered_courses)} out of {len(all_courses)} classes.")
 
     scheduler = CourseScheduler(filtered_courses)
-    valid_combinations = scheduler.get_top_combinations()
+    valid_combinations = scheduler.get_top_combinations(10)
 
     print()
     print("Valid combinations:")
