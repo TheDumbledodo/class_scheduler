@@ -1,4 +1,5 @@
 import re
+
 from bs4 import BeautifulSoup
 
 WEEKDAYS = [
@@ -10,6 +11,7 @@ WEEKDAYS = [
     "پنج شنبه",
     "جمعه",
 ]
+
 
 def parse_courses_with_columns(content):
     soup = BeautifulSoup(content, "html.parser")
@@ -23,6 +25,7 @@ def parse_courses_with_columns(content):
 
     return columns, courses
 
+
 def parse_table_columns(table):
     columns = []
 
@@ -32,6 +35,7 @@ def parse_table_columns(table):
         columns.append(text)
 
     return columns
+
 
 def parse_courses(table):
     courses = []
@@ -54,6 +58,7 @@ def parse_courses(table):
 
     return courses
 
+
 def parse_value(value):
     value = normalize_text(value)
 
@@ -64,14 +69,13 @@ def parse_value(value):
         r"(\d{4}/\d{2}/\d{2}) از (\d{2}:\d{2}) تا (\d{2}:\d{2})",
         value
     )
-
     if exam_schedule:
         date, start, end = exam_schedule.groups()
-        return (
-            date,
-            time_to_minutes(start),
-            time_to_minutes(end)
-        )
+        return {
+            "date": date,
+            "start": time_to_minutes(start),
+            "end": time_to_minutes(end)
+        }
 
     class_schedule = re.match(
         r"(شنبه|یکشنبه|دوشنبه|سه\s*شنبه|چهارشنبه|پنج\s*شنبه|جمعه)\s+"
@@ -79,16 +83,16 @@ def parse_value(value):
         r"(\d{1,2}[:.]?\d{0,2})\s*(?:تا|الی)\s*(\d{1,2}[:.]?\d{2})",
         value
     )
-
     if class_schedule:
         weekday, start, end = class_schedule.groups()
-        return (
-            WEEKDAYS.index(weekday),
-            time_to_minutes(start),
-            time_to_minutes(end)
-        )
+        return {
+            "weekday": WEEKDAYS.index(weekday),
+            "start": time_to_minutes(start),
+            "end": time_to_minutes(end)
+        }
 
     return value
+
 
 def normalize_text(text: str) -> str:
     return (
@@ -97,6 +101,7 @@ def normalize_text(text: str) -> str:
         .replace('ي', 'ی')
         .replace('ك', 'ک')
     )
+
 
 def time_to_minutes(time):
     if ":" in time:
@@ -108,16 +113,19 @@ def time_to_minutes(time):
 
     return int(hour) * 60 + int(minute)
 
+
 def minutes_to_time(minutes):
     hour = minutes // 60
     minute = minutes % 60
 
     return f"{hour:02d}:{minute:02d}"
 
+
 def format_exam_schedule(value):
     date, start, end = value
 
     return f"{date} از {minutes_to_time(start)} تا {minutes_to_time(end)}"
+
 
 def format_class_schedule(value):
     weekday, start, end = value

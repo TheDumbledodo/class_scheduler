@@ -1,7 +1,9 @@
 import unittest
 
 from bs4 import BeautifulSoup
+
 from src.course_parser import parse_courses_with_columns, parse_table_columns, parse_value, time_to_minutes
+
 
 class TestCourseParser(unittest.TestCase):
 

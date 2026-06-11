@@ -1,8 +1,10 @@
 from enum import Enum, auto
 
+
 class FilterMode(Enum):
     ANY_MATCH = auto()
     ALL_MATCH = auto()
+
 
 def filter_courses(courses, filters, mode=FilterMode.ALL_MATCH):
     filtered_courses = {}
@@ -19,6 +21,7 @@ def filter_courses(courses, filters, mode=FilterMode.ALL_MATCH):
                     filtered_courses[course_id] = course
 
     return filtered_courses
+
 
 def matches_filter(value, filter_value):
     if isinstance(filter_value, (list, set, tuple)):

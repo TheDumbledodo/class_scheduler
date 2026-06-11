@@ -2,6 +2,7 @@ import unittest
 
 from src.course_scheduler import CourseScheduler
 
+
 class TestCourseScheduler(unittest.TestCase):
 
     def setUp(self):
@@ -76,6 +77,7 @@ class TestCourseScheduler(unittest.TestCase):
 
         for combo in valid_combos:
             self.assertFalse(self.scheduler.has_conflict(combo))
+
 
 if __name__ == "__main__":
     unittest.main()

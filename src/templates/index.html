@@ -1,0 +1,2043 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>برنامه‌ریز کلاسی</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
+    <style>
+        :root {
+            --bg: #ffffff;
+            --bg2: #f5f5f5;
+            --bg3: #ebebeb;
+            --border: #d0d0d0;
+            --border2: #b8b8b8;
+            --text: #0a0a0a;
+            --text2: #444444;
+            --text3: #888888;
+            --accent: #0a0a0a;
+            --accent-inv: #ffffff;
+            --tag-bg: #ebebeb;
+            --tag-text: #222222;
+            --chip-active: #0a0a0a;
+            --chip-active-text: #ffffff;
+            --input-bg: #ffffff;
+            --shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 4px 24px rgba(0, 0, 0, 0.12);
+            --good: #1a6e3c;
+            --mid: #7a5a00;
+            --bad: #8a1a1a;
+            --good-bg: #edfaf3;
+            --mid-bg: #fffbea;
+            --bad-bg: #fdf0f0;
+            --radius: 8px;
+            --transition: 0.18s ease;
+        }
+
+        [data-theme="dark"] {
+            color-scheme: dark;
+            --bg: #181716;
+            --bg2: #21201e;
+            --bg3: #2a2826;
+            --border: #35312d;
+            --border2: #4a4540;
+            --text: #f1ece6;
+            --text2: #cec7bd;
+            --text3: #9e968b;
+            --accent: #f3eee7;
+            --accent-inv: #181716;
+            --tag-bg: #272420;
+            --tag-text: #ebe4db;
+            --chip-active: #e9e1d7;
+            --chip-active-text: #181716;
+            --input-bg: #22211f;
+            --shadow: 0 1px 4px rgba(0, 0, 0, 0.38);
+            --shadow-lg: 0 4px 24px rgba(0, 0, 0, 0.48);
+            --good: #4ade80;
+            --mid: #fbbf24;
+            --bad: #f87171;
+            --good-bg: #143022;
+            --mid-bg: #2b240f;
+            --bad-bg: #2b1414;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            height: 100%;
+            font-family: 'Vazirmatn', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 14px;
+            line-height: 1.6;
+            transition: background var(--transition), color var(--transition);
+        }
+
+        .app {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 380px;
+            min-width: 300px;
+            max-width: 420px;
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+            resize: horizontal;
+        }
+
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            height: 48px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+            flex-shrink: 0;
+        }
+
+        .topbar-title {
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: 0;
+        }
+
+        .topbar-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .icon-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text2);
+            transition: all var(--transition);
+        }
+
+        .icon-btn:hover {
+            background: var(--bg2);
+            color: var(--text);
+        }
+
+        .icon-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .sidebar-section {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar-scroll {
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .sidebar-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .sidebar-scroll::-webkit-scrollbar-thumb {
+            background: var(--border2);
+            border-radius: 2px;
+        }
+
+        .section-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text3);
+            letter-spacing: 0;
+            margin-bottom: 10px;
+        }
+
+        .upload-zone {
+            border: 2px dashed var(--border2);
+            border-radius: var(--radius);
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition);
+            color: var(--text3);
+            font-size: 13px;
+        }
+
+        .file-list {
+            display: flex;
+            flex-flow: row wrap;
+            gap: 4px;
+            margin-top: 8px;
+            direction: ltr;
+        }
+
+        .file-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 6px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            font-size: 12px;
+            direction: ltr;
+        }
+
+        .file-name {
+            color: var(--text2);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 200px;
+            display: inline-flex;
+            align-items: center;
+            line-height: 1;
+        }
+
+        .file-remove {
+            cursor: pointer;
+            color: var(--text3);
+            padding: 0 4px;
+            border-radius: 3px;
+            font-size: 16px;
+            line-height: 1;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .file-remove:hover {
+            color: var(--bad);
+            background: var(--bad-bg);
+        }
+
+        .filter-dropdown {
+            position: relative;
+            margin-bottom: 8px;
+        }
+
+        .filter-select {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text);
+            font-family: 'Vazirmatn', sans-serif;
+            font-size: 13px;
+            outline: none;
+            transition: border-color var(--transition);
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='none' stroke='%23666' stroke-width='1.5' stroke-linecap='round' d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: left 12px center;
+            padding: 8px 12px 8px 28px;
+        }
+
+        .filter-select:focus {
+            border-color: var(--border2);
+        }
+
+        .filter-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+            min-height: 0;
+        }
+
+        .filter-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 8px 3px 5px;
+            background: var(--tag-bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 12px;
+            color: var(--tag-text);
+        }
+
+        .filter-tag .tag-field {
+            font-size: 10px;
+            color: var(--text3);
+            font-weight: 500;
+        }
+
+        .filter-tag .tag-remove {
+            cursor: pointer;
+            color: var(--text3);
+            display: flex;
+            align-items: center;
+        }
+
+        .filter-tag .tag-remove:hover {
+            color: var(--bad);
+        }
+
+        .chips {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        .chip {
+            padding: 4px 10px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            background: transparent;
+            color: var(--text2);
+            font-family: 'Vazirmatn', sans-serif;
+            transition: all var(--transition);
+        }
+
+        .chip:hover {
+            border-color: var(--border2);
+            color: var(--text);
+        }
+
+        .chip.active {
+            background: var(--chip-active);
+            color: var(--chip-active-text);
+            border-color: var(--chip-active);
+        }
+
+        .row-2 {
+            display: grid;
+            grid-template-columns:1fr 1fr;
+            gap: 8px;
+        }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .field-label {
+            font-size: 11px;
+            color: var(--text3);
+            font-weight: 500;
+        }
+
+        .field-input {
+            padding: 7px 10px;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-family: 'Vazirmatn', sans-serif;
+            font-size: 13px;
+            outline: none;
+            width: 100%;
+        }
+
+        .field-input[type="time"] {
+            color-scheme: light;
+        }
+
+        [data-theme="dark"] .field-input[type="time"] {
+            color-scheme: dark;
+        }
+
+        .field-input[type="time"]::-webkit-calendar-picker-indicator {
+            opacity: 0.75;
+            cursor: pointer;
+        }
+
+        [data-theme="dark"] .field-input[type="time"]::-webkit-calendar-picker-indicator {
+            filter: invert(1) brightness(1.1);
+            opacity: 0.9;
+        }
+
+        .field-input[type="time"]::-webkit-datetime-edit {
+            color: inherit;
+        }
+
+        .field-input:focus {
+            border-color: var(--border2);
+        }
+
+        .range-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .range-input {
+            flex: 1;
+            -webkit-appearance: none;
+            height: 2px;
+            background: var(--border2);
+            border-radius: 2px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .range-input::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--accent);
+            border: 2px solid var(--bg);
+            box-shadow: 0 0 0 1px var(--border2);
+        }
+
+        .range-val {
+            font-size: 12px;
+            color: var(--text3);
+            min-width: 20px;
+            text-align: center;
+        }
+
+        .check-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 3px 0;
+        }
+
+        .check-row input[type="checkbox"] {
+            width: 14px;
+            height: 14px;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+
+        .check-row span {
+            font-size: 13px;
+            color: var(--text2);
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 10px;
+            background: var(--accent);
+            color: var(--accent-inv);
+            border: none;
+            border-radius: var(--radius);
+            font-family: 'Vazirmatn', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity var(--transition);
+        }
+
+        .btn-primary:hover {
+            opacity: 0.85;
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            padding: 7px 14px;
+            background: transparent;
+            color: var(--text2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-family: 'Vazirmatn', sans-serif;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg2);
+            color: var(--text);
+        }
+
+        .content-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .content-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .content-scroll::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 2px;
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            gap: 12px;
+            color: var(--text3);
+            text-align: center;
+            padding: 40px;
+        }
+
+        .empty-state svg {
+            width: 72px;
+            height: 72px;
+            opacity: 0.25;
+            margin-bottom: 4px;
+        }
+
+        .empty-state-title {
+            font-size: 17px;
+            font-weight: 500;
+            color: var(--text2);
+        }
+
+        .empty-state-sub {
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .results-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            height: 48px;
+            flex-shrink: 0;
+        }
+
+        .results-tabs {
+            display: flex;
+            gap: 0;
+        }
+
+        .results-tab {
+            padding: 0 16px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            font-size: 13px;
+            cursor: pointer;
+            color: var(--text3);
+            border-bottom: 2px solid transparent;
+            transition: all var(--transition);
+            white-space: nowrap;
+        }
+
+        .results-tab:hover {
+            color: var(--text);
+        }
+
+        .results-tab.active {
+            color: var(--text);
+            border-bottom-color: var(--accent);
+            font-weight: 500;
+        }
+
+        .results-count {
+            font-size: 11px;
+            background: var(--bg3);
+            color: var(--text3);
+            padding: 2px 7px;
+            border-radius: 10px;
+            margin-right: 6px;
+        }
+
+        .combo-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .combo-card {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        .combo-card-header {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--bg2);
+            border-bottom: 1px solid var(--border);
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .combo-badge {
+            font-size: 12px;
+            font-weight: 600;
+            word-break: break-word;
+            max-width: 100%;
+        }
+
+        .combo-score {
+            font-size: 12px;
+            color: var(--text3);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .combo-days {
+            font-size: 12px;
+            color: var(--text3);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .day-count {
+            background: var(--accent);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 7px;
+            border-radius: 8px;
+            line-height: 1;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .combo-body {
+            padding: 0;
+        }
+
+        .course-row {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 14px;
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border);
+            direction: rtl;
+            text-align: right;
+        }
+
+        .course-row:last-child {
+            border-bottom: none;
+        }
+
+        .course-row > div {
+            flex: 0 0 auto;
+            text-align: right;
+        }
+
+        .combo-table {
+            display: grid;
+            grid-template-columns: auto auto auto;
+        }
+
+        .combo-table > div {
+            padding: 8px 6px;
+            border-bottom: 1px solid var(--border);
+            text-align: right;
+            vertical-align: middle;
+        }
+
+        .combo-table > div:nth-last-child(-n+3) {
+            border-bottom: none;
+        }
+
+        .course-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            background: transparent;
+            border: 0;
+            padding: 0;
+            text-align: right;
+            font-family: 'Vazirmatn', sans-serif;
+            line-height: 1.4;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .course-name:hover {
+            color: var(--accent);
+        }
+
+        .course-name-copy {
+            padding: 4px 8px;
+            margin: -4px -8px;
+            border-radius: 8px;
+            cursor: copy;
+        }
+
+        .course-name-copy:hover {
+            background: var(--bg2);
+        }
+
+        .course-meta {
+            font-size: 12px;
+            color: var(--text3);
+            margin-top: 1px;
+        }
+
+        .course-time {
+            font-size: 12px;
+            color: var(--text2);
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .course-exam {
+            font-size: 11px;
+            color: var(--text3);
+            margin-top: 2px;
+            text-align: right;
+        }
+
+        .course-count {
+            font-size: 11px;
+            color: var(--text3);
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .prof-chip {
+            font-size: 11px;
+            padding: 2px 8px;
+            background: var(--tag-bg);
+            border-radius: 20px;
+            color: var(--tag-text);
+            cursor: pointer;
+            border: 1px solid var(--border);
+            white-space: nowrap;
+        }
+
+        .prof-chip:hover {
+            background: var(--bg3);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity var(--transition);
+        }
+
+        .modal {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 560px;
+            box-shadow: var(--shadow-lg);
+            transform: translateY(8px);
+            transition: transform var(--transition);
+        }
+
+        .modal-overlay.open .modal {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-title {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .reviews-list {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .review-item {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .review-item:last-child {
+            border-bottom: none;
+        }
+
+        .review-professor {
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--text);
+        }
+
+        .review-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .review-course {
+            font-size: 14px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .review-course::before {
+            content: "•";
+            font-size: 22px;
+            margin-left: 6px;
+        }
+
+        .review-text {
+            font-size: 13px;
+            color: var(--text2);
+            line-height: 1.8;
+            white-space: pre-wrap;
+        }
+
+        .ai-summary {
+            padding: 14px;
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        .ai-label {
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0;
+            color: var(--text3);
+            margin-bottom: 6px;
+        }
+
+        .ai-text {
+            font-size: 13px;
+            line-height: 1.7;
+            color: var(--text2);
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text3);
+            font-size: 13px;
+            padding: 8px 0;
+        }
+
+        .settings-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            padding: 4px 0;
+        }
+
+        .settings-toggle span {
+            font-size: 12px;
+            color: var(--text2);
+        }
+
+        .settings-toggle svg {
+            width: 14px;
+            height: 14px;
+            color: var(--text3);
+            transition: transform var(--transition);
+        }
+
+        .settings-toggle.open svg {
+            transform: rotate(180deg);
+        }
+
+        .collapsible {
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            max-height: 0;
+        }
+
+        .run-area {
+            padding: 12px 16px;
+            border-top: 1px solid var(--border);
+            background: var(--bg);
+        }
+
+        .statusbar {
+            padding: 0 20px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-top: 1px solid var(--border);
+            font-size: 11px;
+            color: var(--text3);
+            flex-shrink: 0;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--text3);
+        }
+
+        .status-dot.ready {
+            background: #4ade80;
+        }
+
+        .status-dot.error {
+            background: #f87171;
+        }
+
+        .status-dot.working {
+            background: #60a5fa;
+        }
+
+        .error-msg {
+            color: var(--bad);
+            background: var(--bad-bg);
+            border: 1px solid var(--bad);
+            border-radius: 5px;
+            padding: 8px;
+            margin-top: 8px;
+            font-size: 12px;
+            display: none; /* you can keep it hidden initially, JS shows it */
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1
+            }
+            50% {
+                opacity: 0.4
+            }
+        }
+
+
+        .upload-zone.drag-over {
+            background: var(--bg2);
+            border-color: var(--accent);
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .collapsible.open {
+            max-height: 1000px;
+        }
+
+
+        @media (max-width: 700px) {
+            .app {
+                flex-direction: column
+            }
+
+            .sidebar {
+                width: 100%;
+                max-width: 100%;
+                resize: none;
+                border-left: none;
+                border-bottom: 1px solid var(--border);
+                max-height: 50vh
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="topbar" style="border-bottom:1px solid var(--border);">
+            <span class="topbar-title"><svg fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                            stroke-width="2" style="vertical-align:middle;margin-left:4px" viewBox="0 0 24 24"
+                                            width="18"><path
+                    d="M22 10l-10-5-10 5 10 5 10-5z"/><path d="M6 12v5c0 1.1 2.7 3 6 3s6-1.9 6-3v-5"/></svg>برنامه‌ریز کلاسی</span>
+            <div class="topbar-actions">
+                <button class="icon-btn" id="clearAll" title="پاک کردن همه">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6l-1 14H6L5 6"/>
+                        <path d="M10 11v6"/>
+                        <path d="M14 11v6"/>
+                        <path d="M9 6V4h6v2"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="sidebar-scroll">
+            <!-- Course files upload -->
+            <div class="sidebar-section">
+                <div class="section-label">فایل‌های دروس</div>
+                <div class="upload-zone" id="uploadZone">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.5"
+                         style="width:22px;height:22px;margin-bottom:6px;opacity:0.5" viewBox="0 0 24 24">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" x2="12" y1="3" y2="15"/>
+                    </svg>
+                    <div>فایل HTML را بکشید یا کلیک کنید</div>
+                    <input accept=".html,.htm" id="fileInput" multiple style="display:none" type="file">
+                </div>
+                <div class="file-list" id="fileList"></div>
+                <div class="error-msg" id="courseErrors" style="display:none;"></div>
+            </div>
+            <!-- Professor reviews files upload -->
+            <div class="sidebar-section">
+                <div class="section-label">فایل‌های نظرات استادان</div>
+                <div class="upload-zone" id="reviewUploadZone">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.5"
+                         style="width:22px;height:22px;margin-bottom:6px;opacity:0.5" viewBox="0 0 24 24">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" x2="12" y1="3" y2="15"/>
+                    </svg>
+                    <div>فایل نظرات را بکشید یا کلیک کنید</div>
+                    <input accept=".html,.htm" id="reviewFileInput" multiple style="display:none" type="file">
+                </div>
+                <div class="file-list" id="reviewFileList"></div>
+            </div>
+            <!-- Filters -->
+            <div class="sidebar-section">
+                <div class="section-label">فیلتر دروس</div>
+                <div class="filter-dropdown">
+                    <select class="filter-select" id="profFilter">
+                        <option value="">جستجو استاد</option>
+                    </select>
+                </div>
+                <div class="filter-dropdown">
+                    <select class="filter-select" id="courseFilter">
+                        <option value="">جستجو درس</option>
+                    </select>
+                </div>
+                <div class="filter-tags" id="filterTags"></div>
+            </div>
+            <!-- Time constraints -->
+            <div class="sidebar-section">
+                <div style="margin-bottom:10px;">
+                    <div class="section-label" style="margin-bottom:6px;">روزهای مجاز</div>
+                    <div class="chips" id="dayChips">
+                        <button class="chip active" data-day="0">شنبه</button>
+                        <button class="chip active" data-day="1">یکشنبه</button>
+                        <button class="chip active" data-day="2">دوشنبه</button>
+                        <button class="chip active" data-day="3">سه‌شنبه</button>
+                        <button class="chip active" data-day="4">چهارشنبه</button>
+                        <button class="chip active" data-day="5">پنجشنبه</button>
+                    </div>
+                </div>
+                <div class="row-2">
+                    <div class="field-group">
+                        <label class="field-label">از ساعت</label>
+                        <input class="field-input" id="timeFrom" type="time" value="07:00">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">تا ساعت</label>
+                        <input class="field-input" id="timeTo" type="time" value="20:00">
+                    </div>
+                </div>
+            </div>
+            <!-- Advanced settings -->
+            <div class="sidebar-section">
+                <div class="settings-toggle" id="advancedToggle">
+                    <span class="section-label" style="margin:0">تنظیمات پیشرفته امتیازدهی</span>
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                </div>
+                <div class="collapsible" id="advancedCollapsible">
+                    <div style="padding-top:12px;display:flex;flex-direction:column;gap:10px;">
+                        <div class="field-group">
+                            <label class="field-label">تعداد ترکیب‌های برتر</label>
+                            <input class="field-input" id="topN" max="50" min="1" type="number" value="5">
+                        </div>
+                        <div>
+                            <label class="field-label" style="margin-bottom:6px;display:block;">وزن زنجیره‌پذیری
+                                کلاس‌ها</label>
+                            <div class="range-row">
+                                <input class="range-input" id="chainWeight" max="10" min="0" type="range" value="5">
+                                <span class="range-val" id="chainWeightVal">5</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="field-label" style="margin-bottom:6px;display:block;">فاصله مجاز بین کلاس‌ها
+                                (دقیقه)</label>
+                            <div class="range-row">
+                                <input class="range-input" id="gapThreshold" max="120" min="0" step="5" type="range"
+                                       value="45">
+                                <span class="range-val" id="gapThresholdVal">45</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="field-label" style="margin-bottom:6px;display:block;">اولویت روزهای
+                                کمتر</label>
+                            <div class="range-row">
+                                <input class="range-input" id="fewDaysWeight" max="10" min="0" type="range" value="3">
+                                <span class="range-val" id="fewDaysWeightVal">3</span>
+                            </div>
+                        </div>
+                        <label class="check-row">
+                            <input id="spreadExams" type="checkbox"><span>فاصله بیشتر بین امتحانات ترجیح داده شود</span>
+                        </label>
+                        <div class="field-group" style="margin-top:4px;">
+                            <label class="field-label">کلید API (OpenRouter) — برای خلاصه استاد</label>
+                            <input class="field-input" id="apiKey" placeholder="sk-or-..." type="password">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="run-area">
+            <button class="btn-primary" id="runBtn">یافتن ترکیب‌های برتر</button>
+        </div>
+    </aside>
+
+    <!-- Main area -->
+    <main class="main">
+        <div class="results-header">
+            <div class="results-tabs">
+                <div class="results-tab active" data-tab="courses">لیست دروس <span class="results-count"
+                                                                                   id="coursesCount">0</span></div>
+                <div class="results-tab" data-tab="professors">نظرات<span class="results-count"
+                                                                          id="profsCount">0</span></div>
+                <div class="results-tab" data-tab="combos">ترکیب‌های کلاسی <span class="results-count"
+                                                                                 id="combosCount">0</span></div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+                <button class="btn-secondary" id="exportBtn" style="display:none">خروجی JSON</button>
+            </div>
+        </div>
+        <div class="content-scroll" id="contentArea">
+            <div class="empty-state">
+                <svg fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24">
+                    <rect height="18" rx="2" width="18" x="3" y="4"/>
+                    <line x1="16" x2="16" y1="2" y2="6"/>
+                    <line x1="8" x2="8" y1="2" y2="6"/>
+                    <line x1="3" x2="21" y1="10" y2="10"/>
+                    <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/>
+                </svg>
+                <div class="empty-state-title">فایل HTML خود را بارگذاری کنید</div>
+                <div class="empty-state-sub">فایل‌های HTML صادرشده از سیستم iau.ir را وارد کنید،<br>فیلترها را تنظیم
+                    کنید و ترکیب‌های بدون تداخل را پیدا کنید.
+                </div>
+            </div>
+        </div>
+        <div class="statusbar">
+            <div class="status-dot" id="statusDot"></div>
+            <span id="statusText">آماده</span>
+        </div>
+    </main>
+</div>
+
+<!-- Professor modal -->
+<div class="modal-overlay" id="profModal">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="modal-title" id="profModalTitle">اطلاعات استاد</span>
+            <button class="icon-btn" id="closeModal">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <line x1="18" x2="6" y1="6" y2="18"/>
+                    <line x1="6" x2="18" y1="6" y2="18"/>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body" id="profModalBody"></div>
+    </div>
+</div>
+
+<!-- Embedded server data -->
+<script>
+    const serverData = {
+        columns: {
+    {
+        columns | tojson | safe
+    }
+    },
+    course_files: {
+        {
+            course_files | tojson | safe
+        }
+    }
+    ,
+    prof_files: {
+        {
+            prof_files | tojson | safe
+        }
+    }
+    ,
+    parsing_errors: {
+        {
+            parsing_errors | tojson | safe
+        }
+    }
+    ,
+    prof_values: {
+        {
+            prof_values | tojson | safe
+        }
+    }
+    ,
+    course_values: {
+        {
+            course_values | tojson | safe
+        }
+    }
+    ,
+    course_count: {
+        {
+            course_count | tojson | safe
+        }
+    }
+    }
+    ;
+
+    const WEEKDAYS = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه شنبه', 'چهارشنبه', 'پنج شنبه', 'جمعه'];
+
+    const state = {
+        filters: [],
+        allowedDays: new Set([0, 1, 2, 3, 4, 5]),
+        combinations: [],
+        activeTab: 'courses',
+        processing: false,
+        settings: {
+            top_n: 5,
+            chainWeight: 5,
+            gapThreshold: 45,
+            fewDaysWeight: 3,
+            spreadExams: false,
+            timeFrom: 7 * 60,
+            timeTo: 20 * 60
+        },
+        profSummaries: {},
+        snapshot: serverData
+    };
+
+    let filterColumns = [...(serverData.columns || [])];
+    let courseFiles = [...(serverData.course_files || [])];
+    let profFiles = [...(serverData.prof_files || [])];
+    let parsingErrors = [...(serverData.parsing_errors || [])];
+
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('fileInput');
+    const reviewUploadZone = document.getElementById('reviewUploadZone');
+    const reviewFileInput = document.getElementById('reviewFileInput');
+    const courseFilterSelect = document.getElementById('courseFilter');
+    const profFilterSelect = document.getElementById('profFilter');
+
+    function bootstrap() {
+        applySnapshot(serverData);
+        bindStaticControls();
+        renderFilterTags();
+        updateRunButtonState();
+        updateCounts();
+        renderContent();
+        setStatus('', 'آماده');
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function applySnapshot(snapshot) {
+        state.snapshot = snapshot || {};
+        filterColumns = [...(state.snapshot.columns || [])];
+        courseFiles = [...(state.snapshot.course_files || [])];
+        profFiles = [...(state.snapshot.prof_files || [])];
+        parsingErrors = [...(state.snapshot.parsing_errors || [])];
+        populateFilterDropdowns(state.snapshot);
+        renderFileLists();
+        showCourseErrors();
+        document.getElementById('coursesCount').textContent = state.snapshot.course_count || 0;
+    }
+
+    function populateFilterDropdowns(snapshot) {
+        const data = snapshot || state.snapshot || {};
+        const profSelect = document.getElementById('profFilter');
+        profSelect.innerHTML = '<option value="">جستجو استاد</option>' +
+            (data.prof_values || []).map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('');
+        const courseSelect = document.getElementById('courseFilter');
+        courseSelect.innerHTML = '<option value="">جستجو درس</option>' +
+            (data.course_values || []).map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+    }
+
+    function renderFileLists() {
+        const courseList = document.getElementById('fileList');
+        const reviewList = document.getElementById('reviewFileList');
+
+        courseList.innerHTML = courseFiles.map(f => `
+            <div class="file-item">
+              <span class="file-name">${escapeHtml(f)}</span>
+              <span class="file-remove" data-file="${escapeHtml(f)}" data-type="course">×</span>
+            </div>`).join('');
+        reviewList.innerHTML = profFiles.map(f => `
+            <div class="file-item">
+              <span class="file-name">${escapeHtml(f)}</span>
+              <span class="file-remove" data-file="${escapeHtml(f)}" data-type="prof">×</span>
+            </div>`).join('');
+
+        document.querySelectorAll('.file-remove').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const filename = btn.dataset.file;
+                const type = btn.dataset.type;
+                await deleteFile(filename, type);
+            });
+        });
+    }
+
+    function showCourseErrors() {
+        const el = document.getElementById('courseErrors');
+        if (parsingErrors.length) {
+            el.style.display = 'block';
+            el.innerHTML = parsingErrors.map(escapeHtml).join('<br>');
+        } else {
+            el.style.display = 'none';
+        }
+    }
+
+    function bindStaticControls() {
+        uploadZone.addEventListener('click', () => fileInput.click());
+        reviewUploadZone.addEventListener('click', () => reviewFileInput.click());
+
+        uploadZone.addEventListener('dragover', e => {
+            e.preventDefault();
+            uploadZone.classList.add('drag-over');
+        });
+        uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+        uploadZone.addEventListener('drop', e => {
+            e.preventDefault();
+            uploadZone.classList.remove('drag-over');
+            handleFiles(e.dataTransfer.files, 'course');
+        });
+
+        reviewUploadZone.addEventListener('dragover', e => {
+            e.preventDefault();
+            reviewUploadZone.classList.add('drag-over');
+        });
+        reviewUploadZone.addEventListener('dragleave', () => reviewUploadZone.classList.remove('drag-over'));
+        reviewUploadZone.addEventListener('drop', e => {
+            e.preventDefault();
+            reviewUploadZone.classList.remove('drag-over');
+            handleFiles(e.dataTransfer.files, 'prof');
+        });
+
+        fileInput.addEventListener('change', e => handleFiles(e.target.files, 'course'));
+        reviewFileInput.addEventListener('change', e => handleFiles(e.target.files, 'prof'));
+
+        profFilterSelect.addEventListener('change', e => {
+            if (e.target.value) {
+                addFilter('نام استاد', e.target.value);
+                e.target.value = '';
+            }
+        });
+        courseFilterSelect.addEventListener('change', e => {
+            if (e.target.value) {
+                addFilter('نام درس', e.target.value);
+                e.target.value = '';
+            }
+        });
+        document.querySelectorAll('#dayChips .chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                const day = parseInt(chip.dataset.day);
+                chip.classList.toggle('active');
+                if (state.allowedDays.has(day)) state.allowedDays.delete(day);
+                else state.allowedDays.add(day);
+            });
+        });
+
+        document.getElementById('timeFrom').addEventListener('change', e => {
+            const [h, m] = e.target.value.split(':');
+            state.settings.timeFrom = parseInt(h) * 60 + parseInt(m);
+        });
+        document.getElementById('timeTo').addEventListener('change', e => {
+            const [h, m] = e.target.value.split(':');
+            state.settings.timeTo = parseInt(h) * 60 + parseInt(m);
+        });
+
+        ['chainWeight', 'gapThreshold', 'fewDaysWeight'].forEach(id => {
+            const el = document.getElementById(id);
+            const valSpan = document.getElementById(id + 'Val');
+            el.addEventListener('input', () => {
+                valSpan.textContent = el.value;
+                state.settings[id] = parseInt(el.value);
+            });
+        });
+
+        document.getElementById('topN').addEventListener('input', e => state.settings.top_n = parseInt(e.target.value) || 5);
+        document.getElementById('spreadExams').addEventListener('change', e => state.settings.spreadExams = e.target.checked);
+
+        document.querySelectorAll('.results-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.results-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                state.activeTab = tab.dataset.tab;
+                renderContent();
+            });
+        });
+
+        document.getElementById('runBtn').addEventListener('click', runScheduler);
+
+        document.getElementById('closeModal').addEventListener('click', () => {
+            document.getElementById('profModal').classList.remove('open');
+        });
+        document.getElementById('profModal').addEventListener('click', e => {
+            if (e.target === document.getElementById('profModal')) {
+                document.getElementById('profModal').classList.remove('open');
+            }
+        });
+
+        document.getElementById('advancedToggle').addEventListener('click', function () {
+            this.classList.toggle('open');
+            document.getElementById('advancedCollapsible').classList.toggle('open');
+        });
+
+        document.getElementById('clearAll').addEventListener('click', async () => {
+            try {
+                const resp = await fetch('/api/files/all', {method: 'DELETE'});
+                const data = await resp.json();
+                if (data.success) {
+                    state.filters = [];
+                    state.combinations = [];
+                    applySnapshot(data.state || {});
+                    renderFilterTags();
+                    updateRunButtonState();
+                    renderContent();
+                    updateCounts();
+                    setStatus('ready', 'همه فایل‌ها حذف شدند');
+                } else {
+                    alert('خطا در حذف فایل‌ها');
+                }
+            } catch (err) {
+                alert('خطا در ارتباط با سرور');
+            }
+        });
+
+        document.getElementById('exportBtn').addEventListener('click', () => {
+            const data = state.combinations.map((combo, i) => ({
+                combination: i + 1,
+                courses: combo.combo.map(c => ({
+                    name: c.course_name,
+                    class_id: c.class_id,
+                    professor: c.professor,
+                    schedule: c.class_time ? `${WEEKDAYS[c.class_time.weekday]} ${formatTime(c.class_time.start)}–${formatTime(c.class_time.end)}` : null,
+                    exam: c.exam ? `${c.exam.date} ${formatTime(c.exam.start)}–${formatTime(c.exam.end)}` : null
+                }))
+            }));
+            const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'schedule-combinations.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+    }
+
+    bootstrap();
+
+    async function deleteFile(filename, type) {
+        try {
+            const endpoint = type === 'course'
+                ? `/api/files/courses/${encodeURIComponent(filename)}`
+                : `/api/files/profs/${encodeURIComponent(filename)}`;
+            const resp = await fetch(endpoint, {method: 'DELETE'});
+            const data = await resp.json();
+            if (data.success) {
+                await refreshDashboard(data.state || {});
+                updateCounts();
+                renderContent();
+                setStatus('ready', 'فایل حذف شد');
+            } else {
+                alert('خطا در حذف فایل');
+            }
+        } catch (err) {
+            alert('خطا در ارتباط با سرور');
+        }
+    }
+
+    async function handleFiles(fileList, type) {
+        const formData = new FormData();
+        let count = 0;
+        for (const file of fileList) {
+            formData.append(type === 'course' ? 'course_files' : 'prof_files', file);
+            count++;
+        }
+
+        if (count === 0) {
+            alert('هیچ فایلی انتخاب نشده است.');
+            return;
+        }
+
+        setStatus('working', 'در حال بارگذاری...');
+        try {
+            const resp = await fetch('/api/upload', {method: 'POST', body: formData});
+            const data = await resp.json();
+            if (data.success) {
+                await refreshDashboard(data.state || {});
+                updateCounts();
+                renderContent();
+                setStatus('ready', 'بارگذاری انجام شد');
+            } else {
+                alert('خطا در بارگذاری: ' + (data.error || 'نامشخص'));
+                setStatus('', 'خطا');
+            }
+        } catch (err) {
+            alert('خطا در ارتباط با سرور');
+            setStatus('', 'خطا');
+        }
+    }
+
+    function addFilter(field, value) {
+        if (!state.filters.find(f => f.field === field && f.value === value)) {
+            state.filters.push({field, value});
+            renderFilterTags();
+            updateRunButtonState();
+        }
+    }
+
+    function renderFilterTags() {
+        const container = document.getElementById('filterTags');
+        container.innerHTML = state.filters.map((f, i) => `
+            <div class="filter-tag">
+                <span class="tag-field">${escapeHtml(f.field)}</span>
+                <span>${escapeHtml(f.value)}</span>
+                <span class="tag-remove" data-idx="${i}">×</span>
+            </div>`).join('');
+        container.querySelectorAll('.tag-remove').forEach(btn => {
+            btn.addEventListener('click', () => {
+                state.filters.splice(parseInt(btn.dataset.idx), 1);
+                renderFilterTags();
+                updateRunButtonState();
+            });
+        });
+    }
+
+    async function runScheduler() {
+        if (state.processing || !state.filters.length) {
+            setStatus('', 'برای یافتن ترکیب، ابتدا یک فیلتر اضافه کنید');
+            return;
+        }
+        state.processing = true;
+        const btn = document.getElementById('runBtn');
+        btn.disabled = true;
+        setStatus('working', 'در حال پردازش...');
+
+        const filters = state.filters.map(f => ({column: f.field, value: f.value}));
+        const settings = {
+            top_n: state.settings.top_n,
+            chain_weight: state.settings.chainWeight,
+            gap_threshold: state.settings.gapThreshold,
+            few_days_weight: state.settings.fewDaysWeight,
+            spread_exams: state.settings.spreadExams,
+            time_from: state.settings.timeFrom,
+            time_to: state.settings.timeTo,
+            allowed_days: [...state.allowedDays]
+        };
+        const api_key = document.getElementById('apiKey').value.trim();
+
+        try {
+            const resp = await fetch('/api/filter', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({filters, settings, api_key})
+            });
+            const results = await resp.json();
+            if (results.error) throw new Error(results.error);
+
+            state.combinations = results;
+            state.profSummaries = {};
+            results.forEach(combo => {
+                Object.assign(state.profSummaries, combo.professors);
+            });
+
+            document.getElementById('combosCount').textContent = results.length;
+            document.getElementById('exportBtn').style.display = results.length ? '' : 'none';
+
+            document.querySelectorAll('.results-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector('[data-tab="combos"]').classList.add('active');
+            state.activeTab = 'combos';
+            renderContent();
+            setStatus('ready', results.length ? `${results.length} ترکیب یافت شد` : 'هیچ ترکیب معتبری با محدودیت‌های فعلی پیدا نشد');
+        } catch (err) {
+            setStatus('', 'خطا: ' + err.message);
+        } finally {
+            btn.disabled = false;
+            state.processing = false;
+            updateRunButtonState();
+        }
+    }
+
+    function setStatus(type, text) {
+        const dot = document.getElementById('statusDot');
+        if (type === '' && text.startsWith('خطا')) {
+            dot.className = 'status-dot error';
+        } else {
+            dot.className = 'status-dot' + (type ? ' ' + type : '');
+        }
+        document.getElementById('statusText').textContent = text;
+    }
+
+    function updateCounts() {
+        fetch('/api/courses', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({filters: []})
+        })
+            .then(r => r.json())
+            .then(d => {
+                document.getElementById('coursesCount').textContent = (d.courses || []).length;
+            });
+
+        fetch('/api/professors')
+            .then(r => r.json())
+            .then(d => {
+                document.getElementById('profsCount').textContent = (d.professors || []).length;
+            });
+
+        document.getElementById('combosCount').textContent = state.combinations.length;
+    }
+
+    function updateRunButtonState() {
+        const btn = document.getElementById('runBtn');
+        const disabled = state.processing || !state.filters.length;
+        btn.disabled = disabled;
+        btn.title = disabled ? 'برای یافتن ترکیب‌ها باید حداقل یک فیلتر اضافه کنید' : 'یافتن ترکیب‌های برتر';
+    }
+
+    function renderContent() {
+        const area = document.getElementById('contentArea');
+        if (state.activeTab === 'combos') {
+            renderCombos(area);
+        } else if (state.activeTab === 'professors') {
+            fetchAndRenderProfessors(area);
+        } else if (state.activeTab === 'courses') {
+            fetchAndRenderCourses(area);
+        }
+    }
+
+    async function refreshDashboard(snapshot) {
+        if (snapshot && snapshot.columns) {
+            applySnapshot(snapshot);
+            return;
+        }
+        try {
+            const resp = await fetch('/api/files');
+            const data = await resp.json();
+            applySnapshot(data);
+        } catch (err) {
+            applySnapshot(snapshot || {});
+        }
+    }
+
+    function renderCombos(area) {
+        if (!state.combinations.length) {
+            area.innerHTML = emptyStateHtml('هنوز ترکیبی محاسبه نشده');
+            return;
+        }
+        area.innerHTML = `<div class="combo-grid">${state.combinations.map((combo, ci) => renderComboCard(combo, ci)).join('')}</div>`;
+        area.querySelectorAll('.prof-chip').forEach(chip => {
+            chip.addEventListener('click', () => openProfModal(chip.dataset.prof));
+        });
+    }
+
+    function renderComboCard(combo, idx) {
+        const days = new Set(combo.combo.map(c => c.class_time?.weekday).filter(d => d !== undefined));
+        const daysStr = [...days].sort().map(d => WEEKDAYS[d]).join('، ');
+        const daysCount = days.size;
+        const cells = combo.combo.map(c => {
+            const classTime = c.class_time ? `${WEEKDAYS[c.class_time.weekday]} ${formatTime(c.class_time.start)}–${formatTime(c.class_time.end)}` : '—';
+            const exam = c.exam ? `${c.exam.date} ${formatTime(c.exam.start)}–${formatTime(c.exam.end)}` : '—';
+            return `
+                    <div>
+                        <div class="course-name">${escapeHtml(c.course_name)}</div>
+                        <div class="course-meta">${escapeHtml(c.class_id || c.id || '')}</div>
+                    </div>
+                    <div>
+                        <div class="course-time">${escapeHtml(classTime)}</div>
+                        <div class="course-exam">امتحان: ${escapeHtml(exam)}</div>
+                    </div>
+                    <div>
+                        <span class="prof-chip" data-prof="${escapeHtml(c.professor || 'نامشخص')}">${escapeHtml(c.professor || 'نامشخص')}</span>
+                    </div>`;
+        }).join('');
+        return `
+            <div class="combo-card">
+                <div class="combo-card-header">
+                    <span class="combo-badge">ترکیب ${idx + 1}</span>
+                    <span class="combo-days"><span class="day-count">${daysCount} روز</span> ${escapeHtml(daysStr || 'بدون روز')}</span>
+                </div>
+                <div class="combo-body">
+                    <div class="combo-table">${cells}</div>
+                </div>
+            </div>`;
+    }
+
+    function formatTime(min) {
+        return `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
+    }
+
+    function copyCourseId(courseId, label) {
+        if (!courseId) return;
+        const value = String(courseId);
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(value).then(() => {
+                setStatus('ready', `کد درس ${label || value} کپی شد`);
+            }).catch(() => fallbackCopy(value, label));
+        } else {
+            fallbackCopy(value, label);
+        }
+    }
+
+    function normalizeName(value) {
+        return String(value ?? '')
+            .replace(/ي/g, 'ی')
+            .replace(/ك/g, 'ک')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .toLowerCase();
+    }
+
+    function professorNameMatches(query, candidate) {
+        const queryNorm = normalizeName(query);
+        const candidateNorm = normalizeName(candidate);
+        if (!queryNorm || !candidateNorm) return false;
+        if (queryNorm === candidateNorm) return true;
+        const queryTokens = queryNorm.split(' ').filter(Boolean);
+        const candidateTokens = candidateNorm.split(' ').filter(Boolean);
+        return queryTokens.some(token => candidateTokens.includes(token));
+    }
+
+    function getProfessorScopes() {
+        const scopes = new Set(Object.keys(state.profSummaries || {}));
+        state.filters
+            .filter(f => f.field === 'نام استاد')
+            .forEach(f => scopes.add(f.value));
+        return [...scopes].filter(Boolean);
+    }
+
+    function resolveProfessorSummaryFromState(name) {
+        const summaries = state.profSummaries || {};
+        if (summaries[name]) {
+            return {name, value: summaries[name]};
+        }
+        for (const [key, value] of Object.entries(summaries)) {
+            if (professorNameMatches(name, key)) {
+                return {name: key, value};
+            }
+        }
+        return null;
+    }
+
+    function filterProfessorsByScope(professors) {
+        const scopes = getProfessorScopes();
+        if (!scopes.length) return professors;
+        return professors.filter(prof => scopes.some(scope => professorNameMatches(scope, prof.name)));
+    }
+
+    function fallbackCopy(value, label) {
+        const textarea = document.createElement('textarea');
+        textarea.value = value;
+        textarea.setAttribute('readonly', 'true');
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+            document.execCommand('copy');
+            setStatus('ready', `کد درس ${label || value} کپی شد`);
+        } catch (err) {
+            setStatus('error', 'کپی نشد');
+        } finally {
+            document.body.removeChild(textarea);
+        }
+    }
+
+    function formatGroupSubtitle(group, mode) {
+        if (mode === 'professors') {
+            return group.name || group.professor_name || 'استاد نامشخص';
+        }
+        return group.course_names && group.course_names.length ? group.course_names.join('، ') : group.course_name;
+    }
+
+    function getCourseRowSortKey(item) {
+        const time = item.class_time || {};
+        const hasDay = time.weekday !== undefined && time.weekday !== null;
+        const hasStart = time.start !== undefined && time.start !== null;
+        return [
+            hasDay ? 0 : 1,
+            hasDay ? Number(time.weekday) : 99,
+            hasStart ? 0 : 1,
+            hasStart ? Number(time.start) : Number.MAX_SAFE_INTEGER,
+            String(item.course_name || ''),
+            String(item.source_file || ''),
+            Number(item.source_row || 0),
+            String(item.unique_id || '')
+        ];
+    }
+
+    function sortCourseRowItems(items) {
+        return [...(items || [])].sort((a, b) => {
+            const ak = getCourseRowSortKey(a);
+            const bk = getCourseRowSortKey(b);
+            for (let i = 0; i < ak.length; i += 1) {
+                if (ak[i] < bk[i]) return -1;
+                if (ak[i] > bk[i]) return 1;
+            }
+            return 0;
+        });
+    }
+
+    function renderGroupCard(group, mode) {
+        const subtitle = formatGroupSubtitle(group, mode);
+        const rows = sortCourseRowItems(group.items).map(item => {
+            const classTime = item.class_time ? `${WEEKDAYS[item.class_time.weekday]} ${formatTime(item.class_time.start)}–${formatTime(item.class_time.end)}` : '—';
+            const exam = item.exam ? `${item.exam.date} ${formatTime(item.exam.start)}–${formatTime(item.exam.end)}` : '—';
+            if (mode === 'professors') {
+                return `
+                    <div class="course-row">
+                        <div>
+                            <div class="course-time">${escapeHtml(classTime)}</div>
+                            <div class="course-exam">امتحان: ${escapeHtml(exam)}</div>
+                        </div>
+                        <div>
+                            <span class="prof-chip" data-prof="${escapeHtml(item.professor || 'نامشخص')}">${escapeHtml(item.professor || 'نامشخص')}</span>
+                        </div>
+                        <div></div>
+                    </div>`;
+            }
+            return `
+                <div class="course-row">
+                    <div>
+                        <div class="course-time">${escapeHtml(classTime)}</div>
+                        <div class="course-exam">امتحان: ${escapeHtml(exam)}</div>
+                    </div>
+                    <div>
+                        <span class="prof-chip" data-prof="${escapeHtml(item.professor || 'نامشخص')}">${escapeHtml(item.professor || 'نامشخص')}</span>
+                    </div>
+                </div>`;
+        }).join('');
+
+        return `
+            <div class="combo-card">
+                <div class="combo-card-header">
+                    <button type="button" class="course-name course-name-copy" data-copy-id="${escapeHtml(group.class_id)}">
+                        <span>${escapeHtml(subtitle)}</span>
+                        <span class="course-count">(${escapeHtml(String(group.item_count || 0))} مورد)</span>
+                    </button>
+                </div>
+                <div class="combo-body">${rows}</div>
+            </div>`;
+    }
+
+    async function fetchAndRenderProfessors(area) {
+        try {
+            const resp = await fetch('/api/professors');
+            const data = await resp.json();
+            const professors = filterProfessorsByScope(data.professors || []);
+            document.getElementById('profsCount').textContent = professors.length;
+            if (!professors.length) {
+                area.innerHTML = emptyStateHtml('هیچ استادی یافت نشد');
+                return;
+            }
+            area.innerHTML = `<div class="combo-grid">${professors.map(prof => renderProfessorReviewCard(prof)).join('')}</div>`;
+            bindProfChips(area);
+        } catch (err) {
+            area.innerHTML = emptyStateHtml('خطا در بارگذاری اساتید');
+        }
+    }
+
+    async function fetchAndRenderCourses(area) {
+        const filters = state.filters.map(f => ({column: f.field, value: f.value}));
+        try {
+            const resp = await fetch('/api/courses', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({filters})
+            });
+            const data = await resp.json();
+            const groups = data.groups || [];
+            document.getElementById('coursesCount').textContent = (data.courses || []).length;
+            if (!groups.length) {
+                area.innerHTML = emptyStateHtml('درسی یافت نشد');
+                return;
+            }
+            area.innerHTML = `<div class="combo-grid">${groups.map(group => renderGroupCard(group, 'courses')).join('')}</div>`;
+            bindCopyButtons(area);
+            bindProfChips(area);
+        } catch (err) {
+            area.innerHTML = emptyStateHtml('خطا در بارگذاری دروس');
+        }
+    }
+
+    function bindCopyButtons(area) {
+        area.querySelectorAll('.course-name-copy').forEach(btn => {
+            btn.addEventListener('click', () => {
+                copyCourseId(btn.dataset.copyId, btn.textContent.trim());
+            });
+        });
+    }
+
+    function bindProfChips(area) {
+        area.querySelectorAll('.prof-chip').forEach(chip => {
+            chip.addEventListener('click', () => openProfModal(chip.dataset.prof));
+        });
+    }
+
+    function renderProfessorReviewCard(prof) {
+        const reviews = prof.reviews || [];
+        return `
+            <div class="combo-card" style="width:fit-content">
+                <div class="combo-card-header">
+                    <span class="combo-badge">${escapeHtml(prof.name)}</span>
+                    <span class="combo-score"><span class="day-count">${prof.review_count || 0} نظر</span></span>
+                </div>
+                <div class="combo-body">
+                    ${reviews.length ? `<div class="reviews-list">${reviews.map(review => {
+            const normalized = normalizeReview(review);
+            return `
+                            <div class="review-item">
+                                <div class="review-header">
+                                    <span class="review-course">${escapeHtml(normalized.course || 'نظریه')}</span>
+                                </div>
+                                ${normalized.text ? `<div class="review-text">${escapeHtml(normalized.text).replace(/\n/g, '<br>')}</div>` : ''}
+                            </div>`;
+        }).join('')}</div>` : '<div class="review-item"><div class="review-text">نظری ثبت نشده است.</div></div>'}
+                </div>
+            </div>`;
+    }
+
+    function emptyStateHtml(title) {
+        return `<div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <line x1="3" y1="9" x2="21" y2="9"/>
+                <line x1="9" y1="21" x2="9" y2="9"/>
+            </svg>
+            <div class="empty-state-title">${escapeHtml(title)}</div>
+        </div>`;
+    }
+
+    async function openProfModal(name) {
+        document.getElementById('profModalTitle').textContent = name;
+        const body = document.getElementById('profModalBody');
+        body.innerHTML = '<div class="loading-row"><span class="spinner"></span><span>در حال بارگذاری...</span></div>';
+        document.getElementById('profModal').classList.add('open');
+
+        const apiKey = document.getElementById('apiKey').value.trim();
+        const local = resolveProfessorSummaryFromState(name);
+        if (local) {
+            renderProfModalBody(body, {
+                reviews: local.value.reviews || [],
+                summary: local.value.summary || null
+            });
+            return;
+        }
+        try {
+            const resp = await fetch(`/api/professor/${encodeURIComponent(name)}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({api_key: apiKey})
+            });
+            const data = await resp.json();
+            renderProfModalBody(body, data);
+        } catch (err) {
+            body.innerHTML = '<div style="color:var(--bad)">خطا در دریافت اطلاعات</div>';
+        }
+    }
+
+    function normalizeReview(review) {
+        if (typeof review === 'string') {
+            const courseMatch = review.match(/درس\s*:\s*([^|]+)/);
+            return {
+                text: review,
+                course: courseMatch ? courseMatch[1].trim() : ''
+            };
+        }
+        return {
+            text: review?.text || review?.review || '',
+            course: review?.course || ''
+        };
+    }
+
+    function renderProfModalBody(body, data) {
+        const reviews = (data.reviews || []).map(normalizeReview);
+        const summary = data.summary;
+
+        body.innerHTML = `
+            <div style="color:var(--text3);margin-bottom:12px;">${reviews.length} نظر برای این استاد ثبت شده است.</div>
+
+            ${summary ? `<div class="ai-summary"><div class="ai-label">خلاصه هوش مصنوعی</div><div class="ai-text">${escapeHtml(summary)}</div></div>` : ''}
+
+            ${reviews.length ? `<div class="section-label" style="margin-bottom:8px;">نظرات دانشجویان</div>
+            <div class="reviews-list">${reviews.map(r => `
+                <div class="review-item">
+                    <div class="review-header">
+                        <span class="review-course">${escapeHtml(r.course || 'درس نامشخص')}</span>
+                    </div>
+                    ${r.text ? `<div class="review-text">${escapeHtml(r.text).replace(/\n/g, '<br>')}</div>` : ''}
+                </div>`).join('')}</div>` : ''}
+        `;
+    }
+</script>
+</body>
+</html>

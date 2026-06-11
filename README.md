@@ -1,6 +1,7 @@
 # Class Scheduler
 
-A **Python tool** to help students find all valid combinations of classes based on course ids from [iau.ir](https://stdn.iau.ir/Student/).  
+A **Python tool** to help students find all valid combinations of classes based on course ids
+from [iau.ir](https://stdn.iau.ir/Student/).  
 Input your class IDs (e.g., `زبان تخصصی` → `7000002171`) and see possible schedules **without conflicts**.
 
 ---
@@ -12,6 +13,7 @@ Input your class IDs (e.g., `زبان تخصصی` → `7000002171`) and see poss
 - Handle class and exam schedules
 - Generate valid combinations of classes
 - Display results as a table
+
 ---
 
 ## Installation
@@ -21,6 +23,7 @@ pip install beautifulsoup4 rich
 ```
 
 ## Usage
+
 1. Put your HTML course files in the files/ folder.
 
 2. Set the desired class IDs in main.py:
@@ -44,6 +47,7 @@ pip install beautifulsoup4 rich
     ```
 
 # Testing
+
 ```
 python -m unittest discover -s src
 ```
