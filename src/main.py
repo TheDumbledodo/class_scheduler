@@ -9,8 +9,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from src.ai_summarizer import summarize_professor
-from src.course_filter import filter_courses, FilterMode
-from src.course_parser import parse_courses_with_columns
+from src.course_parser import parse_courses_with_columns, normalize_text
 from src.course_scheduler import CourseScheduler
 from src.professor_review_parser import load_all_professor_reviews, extract_reviews_for_professor
 
@@ -209,6 +208,8 @@ def build_dashboard_snapshot():
         if get_course_name(c)
     ))
 
+    course_professors = build_course_professor_map(visible_courses)
+
     return {
         "columns": get_available_filter_columns(parsed_courses),
         "course_files": get_file_list(COURSES_FOLDER),
@@ -216,7 +217,24 @@ def build_dashboard_snapshot():
         "parsing_errors": parsing_errors,
         "prof_values": prof_values,
         "course_values": course_values,
+        "course_professors": course_professors,
         "course_count": len(visible_courses)
+    }
+
+
+def build_course_professor_map(courses):
+    course_professors = defaultdict(set)
+
+    for course in courses:
+        course_name = get_course_name(course)
+        professor = get_course_professor(course)
+
+        if course_name and professor:
+            course_professors[course_name].add(professor)
+
+    return {
+        course_name: sorted(professors)
+        for course_name, professors in sorted(course_professors.items(), key=lambda item: item[0])
     }
 
 
@@ -270,6 +288,72 @@ def serialize_course(course, cid=None):
         "source_label": f"{source_file}:{source_row}" if source_file and source_row else source_file,
         "raw": {k: v for k, v in course.items() if not isinstance(v, dict) and not str(k).startswith("__")}
     }
+
+
+def normalize_lookup_text(value):
+    return normalize_text(str(value or "")).strip().casefold()
+
+
+def normalize_course_filter_rows(filters_list):
+    rows = []
+
+    for item in filters_list or []:
+        if not isinstance(item, dict):
+            continue
+
+        course_name = ""
+        professor = ""
+
+        if "course_name" in item or "professor" in item:
+            course_name = str(item.get("course_name", "")).strip()
+            professor = str(item.get("professor", "")).strip()
+
+        elif "column" in item and "value" in item:
+            column = str(item.get("column", "")).strip()
+            value = str(item.get("value", "")).strip()
+
+            if column in ("نام درس", "درس", "course_name", "__course_name"):
+                course_name = value
+            elif column in ("نام استاد", "استاد", "professor", "__professor"):
+                professor = value
+
+        if course_name or professor:
+            row = {}
+            if course_name:
+                row["course_name"] = course_name
+            if professor:
+                row["professor"] = professor
+            rows.append(row)
+
+    return rows
+
+
+def course_matches_filter_row(course, row):
+    course_name = row.get("course_name", "")
+    professor = row.get("professor", "")
+
+    if course_name and normalize_lookup_text(get_course_name(course)) != normalize_lookup_text(course_name):
+        return False
+
+    if professor and normalize_lookup_text(get_course_professor(course)) != normalize_lookup_text(professor):
+        return False
+
+    return bool(course_name or professor)
+
+
+def filter_courses_by_rows(courses, rows):
+    normalized_rows = normalize_course_filter_rows(rows)
+
+    if not normalized_rows:
+        return dict(courses)
+
+    filtered_courses = {}
+
+    for course_id, course in courses.items():
+        if any(course_matches_filter_row(course, row) for row in normalized_rows):
+            filtered_courses[course_id] = course
+
+    return filtered_courses
 
 
 def group_courses_by_class_id(course_items):
@@ -469,9 +553,9 @@ async def api_courses(request: Request):
     parse_all_courses()
     data = await get_request_data(request)
     filters_list = data.get("filters", [])
-    filters = build_filters(filters_list)
+    rows = normalize_course_filter_rows(filters_list)
     visible_courses = visible_course_items()
-    filtered = filter_courses(visible_courses, filters, FilterMode.ALL_MATCH) if filters else visible_courses
+    filtered = filter_courses_by_rows(visible_courses, rows) if rows else visible_courses
     courses_list = [serialize_course(course, cid) for cid, course in filtered.items()]
 
     return json_response({
@@ -520,15 +604,14 @@ async def api_filter(request: Request):
         settings = data.get("settings", {})
         api_key = data.get("api_key", "")
 
-        filters = build_filters(filters_list)
-        filter_mode = FilterMode.ALL_MATCH
+        rows = normalize_course_filter_rows(filters_list)
 
         visible_courses = visible_course_items()
 
-        if not filters:
-            return json_response({"error": "At least one filter is required."}, status_code=400)
+        if not rows or not any(row.get("course_name") for row in rows):
+            return json_response({"error": "At least one class is required."}, status_code=400)
 
-        filtered = filter_courses(visible_courses, filters, filter_mode)
+        filtered = filter_courses_by_rows(visible_courses, rows)
 
         scheduler = CourseScheduler(filtered, settings=settings)
         combinations = scheduler.get_top_combinations(

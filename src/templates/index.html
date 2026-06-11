@@ -371,22 +371,29 @@
             width: 100%;
         }
 
-        .field-input[type="time"] {
-            color-scheme: light;
-        }
-
-        [data-theme="dark"] .field-input[type="time"] {
-            color-scheme: dark;
-        }
-
-        .field-input[type="time"]::-webkit-calendar-picker-indicator {
-            opacity: 0.75;
+        .time-select {
+            width: 100%;
+            padding: 7px 28px 7px 10px;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text);
+            font-family: 'Vazirmatn', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            outline: none;
             cursor: pointer;
+            transition: border-color var(--transition);
+            box-sizing: border-box;
+            -webkit-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='none' stroke='%23888' stroke-width='1.5' stroke-linecap='round' d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: left 10px center;
         }
 
-        [data-theme="dark"] .field-input[type="time"]::-webkit-calendar-picker-indicator {
-            filter: invert(1) brightness(1.1);
-            opacity: 0.9;
+        .time-select:focus {
+            border-color: var(--border2);
         }
 
         .field-input:focus {
@@ -925,37 +932,6 @@
             background: var(--bg);
         }
 
-        .statusbar {
-            padding: 0 20px;
-            height: 28px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            border-top: 1px solid var(--border);
-            font-size: 11px;
-            color: var(--text3);
-            flex-shrink: 0;
-        }
-
-        .status-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: var(--text3);
-        }
-
-        .status-dot.ready {
-            background: #4ade80;
-        }
-
-        .status-dot.error {
-            background: #f87171;
-        }
-
-        .status-dot.working {
-            background: #60a5fa;
-        }
-
         .error-msg {
             color: var(--bad);
             background: var(--bad-bg);
@@ -964,7 +940,83 @@
             padding: 8px;
             margin-top: 8px;
             font-size: 12px;
-            display: none; /* you can keep it hidden initially, JS shows it */
+            display: none;
+        }
+
+        .course-filter-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 8px;
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 7px;
+        }
+
+        .course-filter-name {
+            flex: 1;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            min-width: 0;
+        }
+
+        .course-filter-prof-select {
+            flex-shrink: 0;
+            max-width: 110px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            color: var(--text);
+            font-family: 'Vazirmatn', sans-serif;
+            font-size: 11px;
+            outline: none;
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath fill='none' stroke='%23888' stroke-width='1.4' stroke-linecap='round' d='M1 1l3 3 3-3'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: left 6px center;
+            padding: 3px 6px 3px 18px;
+            transition: border-color var(--transition);
+        }
+
+        .course-filter-prof-select:focus {
+            border-color: var(--border2);
+        }
+
+        .course-filter-prof-select.has-value {
+            color: var(--text);
+            border-color: var(--border2);
+            max-width: 130px;
+        }
+
+        .btn-remove-filter {
+            flex-shrink: 0;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text3);
+            font-size: 15px;
+            line-height: 1;
+            padding: 0 2px;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+        }
+
+        .btn-remove-filter:hover {
+            color: var(--bad);
+            background: var(--bad-bg);
+        }
+
+        #courseFilterRows {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-top: 4px;
         }
 
         @keyframes pulse {
@@ -1046,7 +1098,6 @@
                            style="display:none" type="file">
                 </div>
                 <div class="file-list" id="fileList"></div>
-                <div class="error-msg" id="courseErrors" style="display:none;"></div>
             </div>
             <div class="sidebar-section">
                 <div class="section-label">فایل‌های نظرات استادان</div>
@@ -1065,20 +1116,14 @@
                 <div class="file-list" id="reviewFileList"></div>
             </div>
             <div class="sidebar-section">
-                <div class="section-label">فیلتر دروس</div>
+                <div class="section-label">دروس انتخابی</div>
                 <div class="filter-dropdown">
-                    <label class="sr-only" for="profFilter">جستجو استاد</label>
-                    <select aria-label="جستجو استاد" class="filter-select" id="profFilter">
-                        <option value="">جستجو استاد</option>
+                    <label class="sr-only" for="courseFilter">افزودن درس</label>
+                    <select aria-label="افزودن درس" class="filter-select" id="courseFilter">
+                        <option value="">+ افزودن درس</option>
                     </select>
                 </div>
-                <div class="filter-dropdown">
-                    <label class="sr-only" for="courseFilter">جستجو درس</label>
-                    <select aria-label="جستجو درس" class="filter-select" id="courseFilter">
-                        <option value="">جستجو درس</option>
-                    </select>
-                </div>
-                <div class="filter-tags" id="filterTags"></div>
+                <div id="courseFilterRows"></div>
             </div>
             <div class="sidebar-section">
                 <div style="margin-bottom:10px;">
@@ -1095,17 +1140,81 @@
                 <div class="row-2">
                     <div class="field-group">
                         <label class="field-label" for="timeFrom">از ساعت</label>
-                        <input class="field-input" id="timeFrom" type="time" value="07:00">
+                        <select class="time-select" id="timeFrom">
+                            <option value="360">۶:۰۰</option>
+                            <option value="390">۶:۳۰</option>
+                            <option value="420" selected>۷:۰۰</option>
+                            <option value="450">۷:۳۰</option>
+                            <option value="480">۸:۰۰</option>
+                            <option value="510">۸:۳۰</option>
+                            <option value="540">۹:۰۰</option>
+                            <option value="570">۹:۳۰</option>
+                            <option value="600">۱۰:۰۰</option>
+                            <option value="630">۱۰:۳۰</option>
+                            <option value="660">۱۱:۰۰</option>
+                            <option value="690">۱۱:۳۰</option>
+                            <option value="720">۱۲:۰۰</option>
+                            <option value="750">۱۲:۳۰</option>
+                            <option value="780">۱۳:۰۰</option>
+                            <option value="810">۱۳:۳۰</option>
+                            <option value="840">۱۴:۰۰</option>
+                            <option value="870">۱۴:۳۰</option>
+                            <option value="900">۱۵:۰۰</option>
+                            <option value="930">۱۵:۳۰</option>
+                            <option value="960">۱۶:۰۰</option>
+                            <option value="990">۱۶:۳۰</option>
+                            <option value="1020">۱۷:۰۰</option>
+                            <option value="1050">۱۷:۳۰</option>
+                            <option value="1080">۱۸:۰۰</option>
+                            <option value="1110">۱۸:۳۰</option>
+                            <option value="1140">۱۹:۰۰</option>
+                            <option value="1170">۱۹:۳۰</option>
+                            <option value="1200">۲۰:۰۰</option>
+                            <option value="1230">۲۰:۳۰</option>
+                            <option value="1260">۲۱:۰۰</option>
+                        </select>
                     </div>
                     <div class="field-group">
                         <label class="field-label" for="timeTo">تا ساعت</label>
-                        <input class="field-input" id="timeTo" type="time" value="20:00">
+                        <select class="time-select" id="timeTo">
+                            <option value="360">۶:۰۰</option>
+                            <option value="390">۶:۳۰</option>
+                            <option value="420">۷:۰۰</option>
+                            <option value="450">۷:۳۰</option>
+                            <option value="480">۸:۰۰</option>
+                            <option value="510">۸:۳۰</option>
+                            <option value="540">۹:۰۰</option>
+                            <option value="570">۹:۳۰</option>
+                            <option value="600">۱۰:۰۰</option>
+                            <option value="630">۱۰:۳۰</option>
+                            <option value="660">۱۱:۰۰</option>
+                            <option value="690">۱۱:۳۰</option>
+                            <option value="720">۱۲:۰۰</option>
+                            <option value="750">۱۲:۳۰</option>
+                            <option value="780">۱۳:۰۰</option>
+                            <option value="810">۱۳:۳۰</option>
+                            <option value="840">۱۴:۰۰</option>
+                            <option value="870">۱۴:۳۰</option>
+                            <option value="900">۱۵:۰۰</option>
+                            <option value="930">۱۵:۳۰</option>
+                            <option value="960">۱۶:۰۰</option>
+                            <option value="990">۱۶:۳۰</option>
+                            <option value="1020">۱۷:۰۰</option>
+                            <option value="1050">۱۷:۳۰</option>
+                            <option value="1080">۱۸:۰۰</option>
+                            <option value="1110">۱۸:۳۰</option>
+                            <option value="1140">۱۹:۰۰</option>
+                            <option value="1170">۱۹:۳۰</option>
+                            <option value="1200" selected>۲۰:۰۰</option>
+                            <option value="1230">۲۰:۳۰</option>
+                            <option value="1260">۲۱:۰۰</option>
+                        </select>
                     </div>
                 </div>
             </div>
             <div class="sidebar-section">
                 <div class="settings-toggle" id="advancedToggle">
-                    <span class="section-label" style="margin:0">تنظیمات پیشرفته امتیازدهی</span>
+                    <span class="section-label" style="margin:0">تنظیمات پیشرفته</span>
                     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <polyline points="6 9 12 15 18 9"/>
                     </svg>
@@ -1117,23 +1226,23 @@
                             <input class="field-input" id="topN" max="50" min="1" type="number" value="5">
                         </div>
                         <div>
-                            <label class="field-label" for="chainWeight" style="margin-bottom:6px;display:block;">وزن
-                                زنجیره‌پذیری
-                                کلاس‌ها</label>
+                            <label class="field-label" for="chainWeight" style="margin-bottom:6px;display:block;">امتیاز
+                                کلاس‌های پشت سر هم در یک روز</label>
                             <div class="range-row">
-                                <input aria-label="وزن زنجیره‌پذیری کلاس‌ها" class="range-input" id="chainWeight"
+                                <input aria-label="کلاس‌های پشت سر هم در یک روز" class="range-input"
+                                       id="chainWeight"
                                        max="10" min="0" type="range" value="5">
-                                <span class="range-val" id="chainWeightVal">5</span>
+                                <span class="range-val" id="chainWeightVal">۵</span>
                             </div>
                         </div>
                         <div>
-                            <label class="field-label" for="gapThreshold" style="margin-bottom:6px;display:block;">فاصله
-                                مجاز بین کلاس‌ها
+                            <label class="field-label" for="gapThreshold" style="margin-bottom:6px;display:block;">حداکثر
+                                فاصله برای زنجیر شدن کلاس‌ها
                                 (دقیقه)</label>
                             <div class="range-row">
-                                <input aria-label="فاصله مجاز بین کلاس‌ها (دقیقه)" class="range-input"
+                                <input aria-label="حداکثر فاصله برای زنجیر شدن کلاس‌ها (دقیقه)" class="range-input"
                                        id="gapThreshold" max="120" min="0" step="5" type="range" value="45">
-                                <span class="range-val" id="gapThresholdVal">45</span>
+                                <span class="range-val" id="gapThresholdVal">۴۵</span>
                             </div>
                         </div>
                         <div>
@@ -1143,12 +1252,12 @@
                             <div class="range-row">
                                 <input aria-label="اولویت روزهای کمتر" class="range-input" id="fewDaysWeight"
                                        max="10" min="0" type="range" value="3">
-                                <span class="range-val" id="fewDaysWeightVal">3</span>
+                                <span class="range-val" id="fewDaysWeightVal">۳</span>
                             </div>
                         </div>
                         <label class="check-row" for="spreadExams">
-                            <input aria-label="فاصله بیشتر بین امتحانات ترجیح داده شود" id="spreadExams"
-                                   type="checkbox"><span>فاصله بیشتر بین امتحانات ترجیح داده شود</span>
+                            <input aria-label="ترجیح امتحانات در روزهای مختلف" id="spreadExams"
+                                   type="checkbox"><span>ترجیح امتحانات در روزهای مختلف</span>
                         </label>
                         <div class="field-group" style="margin-top:4px;">
                             <label class="field-label" for="apiKey">کلید API (OpenRouter) — برای خلاصه استاد</label>
@@ -1167,11 +1276,11 @@
         <div class="results-header">
             <div class="results-tabs">
                 <div class="results-tab active" data-tab="courses">لیست دروس <span class="results-count"
-                                                                                   id="coursesCount">0</span></div>
-                <div class="results-tab" data-tab="professors">نظرات<span class="results-count"
-                                                                          id="profsCount">0</span></div>
-                <div class="results-tab" data-tab="combos">ترکیب‌های کلاسی <span class="results-count"
-                                                                                 id="combosCount">0</span></div>
+                                                                                   id="coursesCount">۰</span></div>
+                <div class="results-tab" data-tab="professors">نظرات<span class="results-count" id="profsCount">۰</span>
+                </div>
+                <div class="results-tab" data-tab="combos">ترکیب‌های کلاسی <span class="results-count" id="combosCount">۰</span>
+                </div>
             </div>
         </div>
         <div class="content-scroll" id="contentArea">
@@ -1188,10 +1297,6 @@
                     کنید و ترکیب‌های بدون تداخل را پیدا کنید.
                 </div>
             </div>
-        </div>
-        <div class="statusbar">
-            <div class="status-dot" id="statusDot"></div>
-            <span id="statusText">آماده</span>
         </div>
     </main>
 </div>
@@ -1212,7 +1317,11 @@
 </div>
 
 <script>
-    const WEEKDAYS = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه شنبه', 'چهارشنبه', 'پنج شنبه', 'جمعه'];
+    const WEEKDAYS = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج شنبه', 'جمعه'];
+
+    function toPersian(n) {
+        return String(n).replace(/[0-9]/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+    }
 
     const state = {
         filters: [],
@@ -1220,6 +1329,7 @@
         combinations: [],
         activeTab: 'courses',
         processing: false,
+        lastError: null,
         settings: {
             top_n: 5,
             chainWeight: 5,
@@ -1243,12 +1353,11 @@
     const reviewUploadZone = document.getElementById('reviewUploadZone');
     const reviewFileInput = document.getElementById('reviewFileInput');
     const courseFilterSelect = document.getElementById('courseFilter');
-    const profFilterSelect = document.getElementById('profFilter');
 
     async function bootstrap() {
         bindStaticControls();
         await refreshDashboard();
-        renderFilterTags();
+        renderCourseFilterRows();
         updateRunButtonState();
         updateCounts();
         renderContent();
@@ -1272,18 +1381,23 @@
         parsingErrors = [...(state.snapshot.parsing_errors || [])];
         populateFilterDropdowns(state.snapshot);
         renderFileLists();
-        showCourseErrors();
-        document.getElementById('coursesCount').textContent = String(state.snapshot.course_count || 0);
+
+        if (parsingErrors.length) {
+            state.lastError = parsingErrors.join('\n');
+        } else if (state.lastError && !state.combinations.length) {
+            state.lastError = null;
+        }
+        document.getElementById('coursesCount').textContent = toPersian(state.snapshot.course_count || 0);
     }
 
     function populateFilterDropdowns(snapshot) {
         const data = snapshot || state.snapshot || {};
-        const profSelect = document.getElementById('profFilter');
-        profSelect.innerHTML = '<option value="">جستجو استاد</option>' +
-            (data.prof_values || []).map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('');
         const courseSelect = document.getElementById('courseFilter');
-        courseSelect.innerHTML = '<option value="">جستجو درس</option>' +
+
+        courseSelect.innerHTML = '<option value="">+ افزودن درس</option>' +
             (data.course_values || []).map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+
+        renderCourseFilterRows();
     }
 
     function renderFileLists() {
@@ -1309,16 +1423,6 @@
                 await deleteFile(filename, type);
             });
         });
-    }
-
-    function showCourseErrors() {
-        const el = document.getElementById('courseErrors');
-        if (parsingErrors.length) {
-            el.style.display = 'block';
-            el.innerHTML = parsingErrors.map(escapeHtml).join('<br>');
-        } else {
-            el.style.display = 'none';
-        }
     }
 
     function bindStaticControls() {
@@ -1350,15 +1454,10 @@
         fileInput.addEventListener('change', e => handleFiles(e.target.files, 'course'));
         reviewFileInput.addEventListener('change', e => handleFiles(e.target.files, 'prof'));
 
-        profFilterSelect.addEventListener('change', e => {
-            if (e.target.value) {
-                addFilter('نام استاد', e.target.value);
-                e.target.value = '';
-            }
-        });
         courseFilterSelect.addEventListener('change', e => {
-            if (e.target.value) {
-                addFilter('نام درس', e.target.value);
+            const courseName = e.target.value;
+            if (courseName) {
+                addCourseFilter(courseName);
                 e.target.value = '';
             }
         });
@@ -1372,19 +1471,17 @@
         });
 
         document.getElementById('timeFrom').addEventListener('change', e => {
-            const [h, m] = e.target.value.split(':');
-            state.settings.timeFrom = parseInt(h) * 60 + parseInt(m);
+            state.settings.timeFrom = parseInt(e.target.value);
         });
         document.getElementById('timeTo').addEventListener('change', e => {
-            const [h, m] = e.target.value.split(':');
-            state.settings.timeTo = parseInt(h) * 60 + parseInt(m);
+            state.settings.timeTo = parseInt(e.target.value);
         });
 
         ['chainWeight', 'gapThreshold', 'fewDaysWeight'].forEach(id => {
             const el = document.getElementById(id);
             const valSpan = document.getElementById(id + 'Val');
             el.addEventListener('input', () => {
-                valSpan.textContent = el.value;
+                valSpan.textContent = toPersian(el.value);
                 state.settings[id] = parseInt(el.value);
             });
         });
@@ -1425,7 +1522,7 @@
                     state.filters = [];
                     state.combinations = [];
                     applySnapshot(data.state || {});
-                    renderFilterTags();
+                    renderCourseFilterRows();
                     updateRunButtonState();
                     renderContent();
                     updateCounts();
@@ -1494,27 +1591,50 @@
         }
     }
 
-    function addFilter(field, value) {
-        if (!state.filters.find(f => f.field === field && f.value === value)) {
-            state.filters.push({field, value});
-            renderFilterTags();
-            updateRunButtonState();
-        }
+    function addCourseFilter(courseName) {
+        if (state.filters.find(f => f.course_name === courseName)) return;
+        state.filters.push({course_name: courseName, professor: ''});
+        renderCourseFilterRows();
+        updateRunButtonState();
     }
 
-    function renderFilterTags() {
-        const container = document.getElementById('filterTags');
-        container.innerHTML = state.filters.map((f, i) => `
-            <div class="filter-tag">
-                <span class="tag-field">${escapeHtml(f.field)}</span>
-                <span>${escapeHtml(f.value)}</span>
-                <span class="tag-remove" data-idx="${i}">×</span>
-            </div>`).join('');
-        container.querySelectorAll('.tag-remove').forEach(btn => {
+    function renderCourseFilterRows() {
+        const container = document.getElementById('courseFilterRows');
+        const courseProfMap = (state.snapshot && state.snapshot.course_professors) || {};
+        container.innerHTML = state.filters.map((f, i) => {
+            const profs = courseProfMap[f.course_name] || [];
+            const profOptions = profs.map(p =>
+                `<option value="${escapeHtml(p)}" ${f.professor === p ? 'selected' : ''}>${escapeHtml(p)}</option>`
+            ).join('');
+
+            const hasProf = f.professor && profs.length;
+            const profSelect = profs.length ? `
+                <select class="course-filter-prof-select ${hasProf ? 'has-value' : ''}" data-idx="${i}" aria-label="استاد">
+                    <option value="">هر استادی</option>
+                    ${profOptions}
+                </select>` : '';
+            return `
+
+            <div class="course-filter-row" data-idx="${i}">
+                <span class="course-filter-name" title="${escapeHtml(f.course_name)}">${escapeHtml(f.course_name)}</span>
+                ${profSelect}
+                <button class="btn-remove-filter" data-idx="${i}" title="حذف" aria-label="حذف درس">×</button>
+            </div>`;
+        }).join('');
+
+        container.querySelectorAll('.btn-remove-filter').forEach(btn => {
             btn.addEventListener('click', () => {
                 state.filters.splice(parseInt(btn.dataset.idx), 1);
-                renderFilterTags();
+                renderCourseFilterRows();
                 updateRunButtonState();
+            });
+        });
+
+        container.querySelectorAll('.course-filter-prof-select').forEach(sel => {
+            sel.addEventListener('change', e => {
+                const idx = parseInt(e.target.dataset.idx);
+                state.filters[idx].professor = e.target.value;
+                e.target.classList.toggle('has-value', !!e.target.value);
             });
         });
     }
@@ -1529,7 +1649,10 @@
         btn.disabled = true;
         setStatus('working', 'در حال پردازش...');
 
-        const filters = state.filters.map(f => ({column: f.field, value: f.value}));
+        const filters = state.filters.map(f => ({
+            course_name: f.course_name,
+            professor: f.professor || ''
+        }));
         const settings = {
             top_n: state.settings.top_n,
             chain_weight: state.settings.chainWeight,
@@ -1550,9 +1673,13 @@
             });
             const results = await resp.json();
             if (results.error) {
-                setStatus('', 'خطا: ' + results.error);
+                state.lastError = results.error;
+                state.combinations = [];
+                renderContent();
                 return;
             }
+
+            state.lastError = null;
 
             state.combinations = results;
             state.profSummaries = {};
@@ -1560,15 +1687,17 @@
                 Object.assign(state.profSummaries, combo.professors);
             });
 
-            document.getElementById('combosCount').textContent = String(results.length);
+            document.getElementById('combosCount').textContent = toPersian(results.length);
 
             document.querySelectorAll('.results-tab').forEach(t => t.classList.remove('active'));
             document.querySelector('[data-tab="combos"]').classList.add('active');
             state.activeTab = 'combos';
             renderContent();
-            setStatus('ready', results.length ? `${results.length} ترکیب یافت شد` : 'هیچ ترکیب معتبری با محدودیت‌های فعلی پیدا نشد');
+            setStatus('ready', results.length ? `${toPersian(results.length)} ترکیب یافت شد` : 'هیچ ترکیب معتبری با محدودیت‌های فعلی پیدا نشد');
         } catch (err) {
-            setStatus('', 'خطا: ' + err.message);
+            state.lastError = err.message;
+            state.combinations = [];
+            renderContent();
         } finally {
             btn.disabled = false;
             state.processing = false;
@@ -1577,13 +1706,7 @@
     }
 
     function setStatus(type, text) {
-        const dot = document.getElementById('statusDot');
-        if (type === '' && text.startsWith('خطا')) {
-            dot.className = 'status-dot error';
-        } else {
-            dot.className = 'status-dot' + (type ? ' ' + type : '');
-        }
-        document.getElementById('statusText').textContent = text;
+        // status bar removed — errors are shown inline in the content area
     }
 
     function updateCounts() {
@@ -1594,16 +1717,16 @@
         })
             .then(r => r.json())
             .then(d => {
-                document.getElementById('coursesCount').textContent = String((d.courses || []).length);
+                document.getElementById('coursesCount').textContent = toPersian((d.courses || []).length);
             });
 
         fetch('/api/professors')
             .then(r => r.json())
             .then(d => {
-                document.getElementById('profsCount').textContent = String((d.professors || []).length);
+                document.getElementById('profsCount').textContent = toPersian((d.professors || []).length);
             });
 
-        document.getElementById('combosCount').textContent = String(state.combinations.length);
+        document.getElementById('combosCount').textContent = toPersian(state.combinations.length);
     }
 
     function updateRunButtonState() {
@@ -1639,6 +1762,10 @@
     }
 
     function renderCombos(area) {
+        if (state.lastError) {
+            area.innerHTML = errorStateHtml(state.lastError);
+            return;
+        }
         if (!state.combinations.length) {
             area.innerHTML = emptyStateHtml('هنوز ترکیبی محاسبه نشده');
             return;
@@ -1672,8 +1799,8 @@
         return `
             <div class="combo-card">
                 <div class="combo-card-header">
-                    <span class="combo-badge">ترکیب ${idx + 1}</span>
-                    <span class="combo-days"><span class="day-count">${daysCount} روز</span> ${escapeHtml(daysStr || 'بدون روز')}</span>
+                    <span class="combo-badge">ترکیب ${toPersian(idx + 1)}</span>
+                    <span class="combo-days"><span class="day-count">${toPersian(daysCount)} روز</span> ${escapeHtml(daysStr || 'بدون روز')}</span>
                 </div>
                 <div class="combo-body">
                     <div class="combo-table">${cells}</div>
@@ -1682,7 +1809,10 @@
     }
 
     function formatTime(min) {
-        return `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
+        const h = Math.floor(min / 60);
+        const m = min % 60;
+        const t = `${h}:${String(m).padStart(2, '0')}`;
+        return toPersian(t);
     }
 
     function copyCourseId(courseId, label) {
@@ -1719,8 +1849,8 @@
     function getProfessorScopes() {
         const scopes = new Set(Object.keys(state.profSummaries || {}));
         state.filters
-            .filter(f => f.field === 'نام استاد')
-            .forEach(f => scopes.add(f.value));
+            .filter(f => f.professor)
+            .forEach(f => scopes.add(f.professor));
         return [...scopes].filter(Boolean);
     }
 
@@ -1817,7 +1947,7 @@
                 <div class="combo-card-header">
                     <button type="button" class="course-name course-name-copy" data-copy-id="${escapeHtml(group.class_id)}">
                         <span>${escapeHtml(subtitle)}</span>
-                        <span class="course-count">(${escapeHtml(String(group.item_count || 0))} مورد)</span>
+                        <span class="course-count">(${toPersian(group.item_count || 0)} مورد)</span>
                     </button>
                 </div>
                 <div class="combo-body">${rows}</div>
@@ -1829,7 +1959,7 @@
             const resp = await fetch('/api/professors');
             const data = await resp.json();
             const professors = filterProfessorsByScope(data.professors || []);
-            document.getElementById('profsCount').textContent = String(professors.length);
+            document.getElementById('profsCount').textContent = toPersian(professors.length);
             if (!professors.length) {
                 area.innerHTML = emptyStateHtml('هیچ استادی یافت نشد');
                 return;
@@ -1842,7 +1972,10 @@
     }
 
     async function fetchAndRenderCourses(area) {
-        const filters = state.filters.map(f => ({column: f.field, value: f.value}));
+        const filters = state.filters.map(f => ({
+            course_name: f.course_name,
+            professor: f.professor || ''
+        }));
         try {
             const resp = await fetch('/api/courses', {
                 method: 'POST',
@@ -1851,7 +1984,7 @@
             });
             const data = await resp.json();
             const groups = data.groups || [];
-            document.getElementById('coursesCount').textContent = String((data.courses || []).length);
+            document.getElementById('coursesCount').textContent = toPersian((data.courses || []).length);
             if (!groups.length) {
                 area.innerHTML = emptyStateHtml('درسی یافت نشد');
                 return;
@@ -1884,7 +2017,7 @@
             <div class="combo-card" style="width:fit-content">
                 <div class="combo-card-header">
                     <span class="combo-badge">${escapeHtml(prof.name)}</span>
-                    <span class="combo-score"><span class="day-count">${prof.review_count || 0} نظر</span></span>
+                    <span class="combo-score"><span class="day-count">${toPersian(prof.review_count || 0)} نظر</span></span>
                 </div>
                 <div class="combo-body">
                     ${reviews.length ? `<div class="reviews-list">${reviews.map(review => {
@@ -1899,6 +2032,18 @@
         }).join('')}</div>` : '<div class="review-item"><div class="review-text">نظری ثبت نشده است.</div></div>'}
                 </div>
             </div>`;
+    }
+
+    function errorStateHtml(message) {
+        return `<div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--bad)">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <div class="empty-state-title" style="color:var(--bad)">خطا</div>
+            <div class="empty-state-sub" style="color:var(--bad);white-space:pre-wrap;text-align:right;direction:rtl;">${escapeHtml(message)}</div>
+        </div>`;
     }
 
     function emptyStateHtml(title) {
@@ -1959,7 +2104,7 @@
         const summary = data.summary;
 
         body.innerHTML = `
-            <div style="color:var(--text3);margin-bottom:12px;">${reviews.length} نظر برای این استاد ثبت شده است.</div>
+            <div style="color:var(--text3);margin-bottom:12px;">${toPersian(reviews.length)} نظر برای این استاد ثبت شده است.</div>
 
             ${summary ? `<div class="ai-summary"><div class="ai-label">خلاصه هوش مصنوعی</div><div class="ai-text">${escapeHtml(summary)}</div></div>` : ''}
 
