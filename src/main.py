@@ -1,9 +1,12 @@
 import os
+import re
 import traceback
 from collections import defaultdict
 
-from flask import Flask, request, render_template, jsonify, redirect, url_for
-from werkzeug.utils import secure_filename
+import unicodedata
+from fastapi import FastAPI, Request, status
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
 
 from src.ai_summarizer import summarize_professor
 from src.course_filter import filter_courses, FilterMode
@@ -20,11 +23,45 @@ ALLOWED_EXTENSIONS = {'html'}
 os.makedirs(COURSES_FOLDER, exist_ok=True)
 os.makedirs(PROFS_FOLDER, exist_ok=True)
 
-app = Flask(__name__)
+app = FastAPI(title="Class Scheduler")
+templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "src", "templates"))
 
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def secure_filename(filename: str | bytes):
+    filename = os.fsdecode(os.path.basename(filename)).strip()
+    filename = unicodedata.normalize("NFKD", filename)
+    filename = re.sub(r"[^A-Za-z0-9._\-\u0600-\u06FF]+", "_", filename)
+    filename = filename.strip("._")
+    return filename or "upload.html"
+
+
+def json_response(content, status_code=200):
+    return JSONResponse(content=content, status_code=status_code)
+
+
+async def get_request_data(request: Request):
+    try:
+        data = await request.json()
+        return data if isinstance(data, dict) else {}
+    except ValueError:
+        return {}
+
+
+async def save_uploaded_files(files, folder):
+    for file in files:
+        if not file or not file.filename or not allowed_file(file.filename):
+            continue
+
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(folder, filename)
+        content = await file.read()
+
+        with open(filepath, "wb") as out:
+            out.write(content)
 
 
 def get_file_list(folder):
@@ -325,90 +362,72 @@ def build_professor_summary(courses_list, all_reviews):
     )
 
 
-@app.route("/")
-def index():
+@app.get("/", response_class=HTMLResponse)
+async def index(request: Request):
     snapshot = build_dashboard_snapshot()
-    return render_template("index.html", **snapshot)
+    return templates.TemplateResponse(
+        request=request,
+        name="index.html",
+        context={"request": request, **snapshot}
+    )
 
 
-@app.route("/upload", methods=["POST"])
-def upload():
-    if request.is_json:
-        pass
-
-    if 'course_files' in request.files:
-        files = request.files.getlist('course_files')
-
-        for file in files:
-            if file and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                file.save(os.path.join(COURSES_FOLDER, filename))
-
-    if 'prof_files' in request.files:
-        files = request.files.getlist('prof_files')
-
-        for file in files:
-            if file and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                file.save(os.path.join(PROFS_FOLDER, filename))
-    return redirect(url_for("index"))
+@app.post("/upload")
+async def upload(request: Request):
+    form = await request.form()
+    await save_uploaded_files(form.getlist("course_files"), COURSES_FOLDER)
+    await save_uploaded_files(form.getlist("prof_files"), PROFS_FOLDER)
+    return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
 
 
-@app.route("/api/upload", methods=["POST"])
-def api_upload():
+@app.post("/api/upload")
+async def api_upload(request: Request):
     try:
-        if 'course_files' in request.files:
-            for file in request.files.getlist('course_files'):
-                if file and allowed_file(file.filename):
-                    file.save(os.path.join(COURSES_FOLDER, secure_filename(file.filename)))
-
-        if 'prof_files' in request.files:
-            for file in request.files.getlist('prof_files'):
-                if file and allowed_file(file.filename):
-                    file.save(os.path.join(PROFS_FOLDER, secure_filename(file.filename)))
+        form = await request.form()
+        await save_uploaded_files(form.getlist("course_files"), COURSES_FOLDER)
+        await save_uploaded_files(form.getlist("prof_files"), PROFS_FOLDER)
 
         snapshot = build_dashboard_snapshot()
 
-        return jsonify({
+        return json_response({
             "success": True,
             "state": snapshot,
             "parsed_count": snapshot["course_count"]
         })
-
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+        return json_response({"success": False, "error": str(e)}, status_code=500)
 
 
-@app.route("/api/files")
-def api_files():
+@app.get("/api/files")
+async def api_files():
     snapshot = build_dashboard_snapshot()
-    return jsonify(snapshot)
+    return json_response(snapshot)
 
 
-@app.route("/api/files/courses/<filename>", methods=["DELETE"])
-def delete_course_file(filename):
+@app.delete("/api/files/courses/{filename}")
+async def delete_course_file(filename: str):
     filepath = os.path.join(COURSES_FOLDER, filename)
 
     if os.path.exists(filepath) and allowed_file(filename):
         os.remove(filepath)
-        return jsonify({"success": True, "state": build_dashboard_snapshot()})
+        return json_response({"success": True, "state": build_dashboard_snapshot()})
 
-    return jsonify({"success": False, "error": "File not found"}), 404
+    return json_response({"success": False, "error": "File not found"}, status_code=404)
 
 
-@app.route("/api/files/profs/<filename>", methods=["DELETE"])
-def delete_prof_file(filename):
+@app.delete("/api/files/profs/{filename}")
+async def delete_prof_file(filename: str):
     filepath = os.path.join(PROFS_FOLDER, filename)
 
     if os.path.exists(filepath) and allowed_file(filename):
         os.remove(filepath)
-        return jsonify({"success": True, "state": build_dashboard_snapshot()})
+        return json_response({"success": True, "state": build_dashboard_snapshot()})
 
-    return jsonify({"success": False, "error": "File not found"}), 404
+    return json_response({"success": False, "error": "File not found"}, status_code=404)
 
 
-@app.route("/api/files/all", methods=["DELETE"])
-def delete_all_files():
+@app.delete("/api/files/all")
+async def delete_all_files():
     for fname in os.listdir(COURSES_FOLDER):
         fpath = os.path.join(COURSES_FOLDER, fname)
         if os.path.isfile(fpath):
@@ -419,21 +438,22 @@ def delete_all_files():
         if os.path.isfile(fpath):
             os.remove(fpath)
 
-    return jsonify({"success": True, "state": build_dashboard_snapshot()})
+    return json_response({"success": True, "state": build_dashboard_snapshot()})
 
 
-@app.route("/api/columns")
-def api_columns():
+@app.get("/api/columns")
+async def api_columns():
     parse_all_courses()
-    return jsonify(get_available_filter_columns(parsed_courses))
+    return json_response(get_available_filter_columns(parsed_courses))
 
 
-@app.route("/api/column_values")
-def api_column_values():
-    column = request.args.get("column", "").strip()
+@app.get("/api/column_values")
+async def api_column_values(column: str = ""):
+    column = column.strip()
 
     if not column:
-        return jsonify([])
+        return json_response([])
+
     values = set()
 
     for c in parsed_courses.values():
@@ -441,41 +461,41 @@ def api_column_values():
         if val is not None and not isinstance(val, (tuple, list, dict)):
             values.add(str(val))
 
-    return jsonify(sorted(values))
+    return json_response(sorted(values))
 
 
-@app.route("/api/courses", methods=["POST"])
-def api_courses():
+@app.post("/api/courses")
+async def api_courses(request: Request):
     parse_all_courses()
-    data = request.get_json() or {}
+    data = await get_request_data(request)
     filters_list = data.get("filters", [])
     filters = build_filters(filters_list)
     visible_courses = visible_course_items()
     filtered = filter_courses(visible_courses, filters, FilterMode.ALL_MATCH) if filters else visible_courses
     courses_list = [serialize_course(course, cid) for cid, course in filtered.items()]
 
-    return jsonify(
-        courses=courses_list,
-        groups=group_courses_by_class_id(courses_list),
-    )
+    return json_response({
+        "courses": courses_list,
+        "groups": group_courses_by_class_id(courses_list),
+    })
 
 
-@app.route("/api/professors")
-def api_professors():
+@app.get("/api/professors")
+async def api_professors():
     parse_all_courses()
     all_reviews = _load_cached_reviews()
     courses_list = [serialize_course(course, cid) for cid, course in visible_course_items().items()]
     profs = build_professor_summary(courses_list, all_reviews)
 
-    return jsonify(
-        professors=profs,
-        class_groups=group_courses_by_class_id(courses_list),
-    )
+    return json_response({
+        "professors": profs,
+        "class_groups": group_courses_by_class_id(courses_list),
+    })
 
 
-@app.route("/api/professor/<name>", methods=["POST"])
-def api_professor_detail(name):
-    data = request.get_json() or {}
+@app.post("/api/professor/{name}")
+async def api_professor_detail(name: str, request: Request):
+    data = await get_request_data(request)
     api_key = data.get("api_key", "")
     all_reviews = _load_cached_reviews()
     revs = extract_reviews_for_professor(all_reviews, name)
@@ -484,18 +504,18 @@ def api_professor_detail(name):
     if api_key and revs:
         summary = summarize_professor(revs, name, api_key=api_key)
 
-    return jsonify({
+    return json_response({
         "name": name,
         "reviews": revs,
         "summary": summary
     })
 
 
-@app.route("/api/filter", methods=["POST"])
-def api_filter():
+@app.post("/api/filter")
+async def api_filter(request: Request):
     try:
         parse_all_courses()
-        data = request.get_json() or {}
+        data = await get_request_data(request)
         filters_list = data.get("filters", [])
         settings = data.get("settings", {})
         api_key = data.get("api_key", "")
@@ -506,7 +526,7 @@ def api_filter():
         visible_courses = visible_course_items()
 
         if not filters:
-            return jsonify(error="At least one filter is required."), 400
+            return json_response({"error": "At least one filter is required."}, status_code=400)
 
         filtered = filter_courses(visible_courses, filters, filter_mode)
 
@@ -559,11 +579,11 @@ def api_filter():
                 "professors": profs_seen
             })
 
-        return jsonify(results)
+        return json_response(results)
 
     except Exception as e:
         traceback.print_exc()
-        return jsonify(error=str(e)), 500
+        return json_response({"error": str(e)}, status_code=500)
 
 
 def build_filters(filters_list):
@@ -629,4 +649,6 @@ def build_filters(filters_list):
 
 if __name__ == "__main__":
     parse_all_courses()
-    app.run(debug=True)
+    import uvicorn
+
+    uvicorn.run(app, host="127.0.0.1", port=8000)

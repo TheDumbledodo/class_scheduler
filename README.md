@@ -19,7 +19,7 @@ Input your class IDs (e.g., `زبان تخصصی` → `7000002171`) and see poss
 ## Installation
 
 ```bash
-pip install beautifulsoup4 rich
+pip install -r requirements.txt
 ```
 
 ## Usage
@@ -34,7 +34,7 @@ pip install beautifulsoup4 rich
 3. Run the scheduler:
 
     ```bash
-    python src/main.py
+    uvicorn src.main:app --reload
     ```
 
 4. Output shows valid class combinations:
