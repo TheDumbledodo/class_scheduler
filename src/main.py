@@ -604,6 +604,11 @@ async def api_filter(request: Request):
         settings = data.get("settings", {})
         api_key = data.get("api_key", "")
 
+        time_from = settings.get("time_from")
+        time_to = settings.get("time_to")
+        if time_from is not None and time_to is not None and time_from >= time_to:
+            return json_response({"error": "محدوده زمانی نامعتبر"}, status_code=400)
+
         rows = normalize_course_filter_rows(filters_list)
 
         visible_courses = visible_course_items()

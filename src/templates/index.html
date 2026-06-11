@@ -1092,7 +1092,7 @@
                         <polyline points="17 8 12 3 7 8"/>
                         <line x1="12" x2="12" y1="3" y2="15"/>
                     </svg>
-                    <div>فایل HTML را بکشید یا کلیک کنید</div>
+                    <div>فایل دروس را بکشید یا کلیک کنید</div>
                     <label class="sr-only" for="fileInput">بارگذاری فایل‌های دروس</label>
                     <input accept=".html,.htm" aria-label="بارگذاری فایل‌های دروس" id="fileInput" multiple
                            style="display:none" type="file">
@@ -1226,8 +1226,8 @@
                             <input class="field-input" id="topN" max="50" min="1" type="number" value="5">
                         </div>
                         <div>
-                            <label class="field-label" for="chainWeight" style="margin-bottom:6px;display:block;">امتیاز
-                                کلاس‌های پشت سر هم در یک روز</label>
+                            <label class="field-label" for="chainWeight" style="margin-bottom:6px;display:block;">کلاس‌های
+                                پشت سر هم در یک روز</label>
                             <div class="range-row">
                                 <input aria-label="کلاس‌های پشت سر هم در یک روز" class="range-input"
                                        id="chainWeight"
@@ -1268,7 +1268,7 @@
             </div>
         </div>
         <div class="run-area">
-            <button class="btn-primary" id="runBtn">یافتن ترکیب‌های برتر</button>
+            <button class="btn-primary" id="runBtn">یافتن برنامه کلاسی</button>
         </div>
     </aside>
 
@@ -1292,8 +1292,8 @@
                     <line x1="3" x2="21" y1="10" y2="10"/>
                     <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/>
                 </svg>
-                <div class="empty-state-title">فایل HTML خود را بارگذاری کنید</div>
-                <div class="empty-state-sub">فایل‌های HTML صادرشده از سیستم iau.ir را وارد کنید،<br>فیلترها را تنظیم
+                <div class="empty-state-title">فایل دروس خود را بارگذاری کنید</div>
+                <div class="empty-state-sub">فایل‌های دروس صادرشده از سیستم iau.ir را وارد کنید،<br>فیلترها را تنظیم
                     کنید و ترکیب‌های بدون تداخل را پیدا کنید.
                 </div>
             </div>
@@ -1330,6 +1330,7 @@
         activeTab: 'courses',
         processing: false,
         lastError: null,
+        schedulerRun: false,
         settings: {
             top_n: 5,
             chainWeight: 5,
@@ -1361,7 +1362,6 @@
         updateRunButtonState();
         updateCounts();
         renderContent();
-        setStatus('', 'آماده');
     }
 
     function escapeHtml(value) {
@@ -1375,6 +1375,7 @@
 
     function applySnapshot(snapshot) {
         state.snapshot = snapshot || {};
+        state.schedulerRun = false;
         filterColumns = [...(state.snapshot.columns || [])];
         courseFiles = [...(state.snapshot.course_files || [])];
         profFiles = [...(state.snapshot.prof_files || [])];
@@ -1526,7 +1527,6 @@
                     updateRunButtonState();
                     renderContent();
                     updateCounts();
-                    setStatus('ready', 'همه فایل‌ها حذف شدند');
                 } else {
                     alert('خطا در حذف فایل‌ها');
                 }
@@ -1550,7 +1550,6 @@
                 await refreshDashboard(data.state || {});
                 updateCounts();
                 renderContent();
-                setStatus('ready', 'فایل حذف شد');
             } else {
                 alert('خطا در حذف فایل');
             }
@@ -1572,7 +1571,6 @@
             return;
         }
 
-        setStatus('working', 'در حال بارگذاری...');
         try {
             const resp = await fetch('/api/upload', {method: 'POST', body: formData});
             const data = await resp.json();
@@ -1580,14 +1578,12 @@
                 await refreshDashboard(data.state || {});
                 updateCounts();
                 renderContent();
-                setStatus('ready', 'بارگذاری انجام شد');
             } else {
                 alert('خطا در بارگذاری: ' + (data.error || 'نامشخص'));
-                setStatus('', 'خطا');
+
             }
         } catch (err) {
             alert('خطا در ارتباط با سرور');
-            setStatus('', 'خطا');
         }
     }
 
@@ -1641,13 +1637,21 @@
 
     async function runScheduler() {
         if (state.processing || !state.filters.length) {
-            setStatus('', 'برای یافتن ترکیب، ابتدا یک فیلتر اضافه کنید');
+            return;
+        }
+        if (state.settings.timeFrom >= state.settings.timeTo) {
+            state.lastError = 'محدوده زمانی اشتباه';
+            state.combinations = [];
+            state.schedulerRun = true;
+            state.activeTab = 'combos';
+            renderContent();
+            state.processing = false;
+            updateRunButtonState();
             return;
         }
         state.processing = true;
         const btn = document.getElementById('runBtn');
         btn.disabled = true;
-        setStatus('working', 'در حال پردازش...');
 
         const filters = state.filters.map(f => ({
             course_name: f.course_name,
@@ -1675,11 +1679,14 @@
             if (results.error) {
                 state.lastError = results.error;
                 state.combinations = [];
+                state.schedulerRun = true;
+                state.activeTab = 'combos';
                 renderContent();
                 return;
             }
 
             state.lastError = null;
+            state.schedulerRun = true;
 
             state.combinations = results;
             state.profSummaries = {};
@@ -1693,20 +1700,17 @@
             document.querySelector('[data-tab="combos"]').classList.add('active');
             state.activeTab = 'combos';
             renderContent();
-            setStatus('ready', results.length ? `${toPersian(results.length)} ترکیب یافت شد` : 'هیچ ترکیب معتبری با محدودیت‌های فعلی پیدا نشد');
         } catch (err) {
             state.lastError = err.message;
             state.combinations = [];
+            state.schedulerRun = true;
+            state.activeTab = 'combos';
             renderContent();
         } finally {
             btn.disabled = false;
             state.processing = false;
             updateRunButtonState();
         }
-    }
-
-    function setStatus(type, text) {
-        // status bar removed — errors are shown inline in the content area
     }
 
     function updateCounts() {
@@ -1767,7 +1771,7 @@
             return;
         }
         if (!state.combinations.length) {
-            area.innerHTML = emptyStateHtml('هنوز ترکیبی محاسبه نشده');
+            area.innerHTML = emptyStateHtml(state.schedulerRun ? 'هیچ ترکیب معتبری با محدودیت‌های فعلی پیدا نشد' : 'هنوز ترکیبی محاسبه نشده');
             return;
         }
         area.innerHTML = `<div class="combo-grid">${state.combinations.map((combo, ci) => renderComboCard(combo, ci)).join('')}</div>`;
@@ -1819,11 +1823,8 @@
         if (!courseId) return;
         const value = String(courseId);
         if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(value).then(() => {
-                setStatus('ready', `کد درس ${label || value} کپی شد`);
-            }).catch(() => fallbackCopy(value, label));
-        } else {
-            fallbackCopy(value, label);
+            navigator.clipboard.writeText(value).catch(() => {
+            });
         }
     }
 
@@ -1871,10 +1872,6 @@
         const scopes = getProfessorScopes();
         if (!scopes.length) return professors;
         return professors.filter(prof => scopes.some(scope => professorNameMatches(scope, prof.name)));
-    }
-
-    function fallbackCopy(value, label) {
-        setStatus('error', `کپی خودکار در این مرورگر پشتیبانی نمی‌شود: ${label || value}`);
     }
 
     function formatGroupSubtitle(group, mode) {
