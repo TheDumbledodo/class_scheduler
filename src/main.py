@@ -11,7 +11,7 @@ from fastapi.templating import Jinja2Templates
 from src.ai_summarizer import summarize_professor
 from src.course_parser import parse_courses_with_columns, normalize_text
 from src.course_scheduler import CourseScheduler
-from src.professor_review_parser import load_all_professor_reviews, extract_reviews_for_professor
+from src.professor_review_parser import load_all_professor_reviews, extract_reviews_for_professor, strip_honorifics
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
@@ -173,7 +173,8 @@ def get_course_professor(course):
             value = course.get(key)
 
             if value not in (None, ""):
-                return str(value).strip()
+                name = str(value).strip()
+                return strip_honorifics(name) or name
 
     return None
 
@@ -655,9 +656,10 @@ async def api_filter(request: Request):
 
                 if prof_name and prof_name not in profs_seen:
                     revs = extract_reviews_for_professor(all_reviews, prof_name)
+                    review_texts = [r['review'] if isinstance(r, dict) else r for r in revs]
                     summary = None
                     if api_key and revs:
-                        summary = summarize_professor(revs, prof_name, api_key=api_key)
+                        summary = summarize_professor(review_texts, prof_name, api_key=api_key)
                     profs_seen[prof_name] = {
                         "reviews": revs,
                         "summary": summary

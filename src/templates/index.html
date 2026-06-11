@@ -275,43 +275,6 @@
             border-color: var(--border2);
         }
 
-        .filter-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-top: 8px;
-            min-height: 0;
-        }
-
-        .filter-tag {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            padding: 3px 8px 3px 5px;
-            background: var(--tag-bg);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            font-size: 12px;
-            color: var(--tag-text);
-        }
-
-        .filter-tag .tag-field {
-            font-size: 10px;
-            color: var(--text3);
-            font-weight: 500;
-        }
-
-        .filter-tag .tag-remove {
-            cursor: pointer;
-            color: var(--text3);
-            display: flex;
-            align-items: center;
-        }
-
-        .filter-tag .tag-remove:hover {
-            color: var(--bad);
-        }
-
         .chips {
             display: flex;
             gap: 4px;
@@ -474,23 +437,6 @@
         .btn-primary:disabled {
             opacity: 0.4;
             cursor: not-allowed;
-        }
-
-        .btn-secondary {
-            padding: 7px 14px;
-            background: transparent;
-            color: var(--text2);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            font-family: 'Vazirmatn', sans-serif;
-            font-size: 12px;
-            cursor: pointer;
-            transition: all var(--transition);
-        }
-
-        .btn-secondary:hover {
-            background: var(--bg2);
-            color: var(--text);
         }
 
         .content-scroll {
@@ -702,17 +648,6 @@
             color: var(--accent);
         }
 
-        .course-name-copy {
-            padding: 4px 8px;
-            margin: -4px -8px;
-            border-radius: 8px;
-            cursor: copy;
-        }
-
-        .course-name-copy:hover {
-            background: var(--bg2);
-        }
-
         .course-meta {
             font-size: 12px;
             color: var(--text3);
@@ -775,9 +710,12 @@
             border-radius: 12px;
             width: 100%;
             max-width: 560px;
+            max-height: 80vh;
             box-shadow: var(--shadow-lg);
             transform: translateY(8px);
             transition: transform var(--transition);
+            display: flex;
+            flex-direction: column;
         }
 
         .modal-overlay.open .modal {
@@ -799,6 +737,9 @@
 
         .modal-body {
             padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+            min-height: 0;
         }
 
         .reviews-list {
@@ -815,13 +756,6 @@
             border-bottom: none;
         }
 
-        .review-professor {
-            font-size: 12px;
-            font-weight: 600;
-            margin-bottom: 4px;
-            color: var(--text);
-        }
-
         .review-header {
             display: flex;
             align-items: center;
@@ -834,12 +768,19 @@
             font-weight: 700;
             display: inline-flex;
             align-items: center;
+            margin-inline-end: 12px;
         }
 
         .review-course::before {
             content: "•";
-            font-size: 22px;
+            font-size: 16px;
+            line-height: 1;
             margin-left: 6px;
+        }
+
+        .review-date {
+            font-size: 12px;
+            color: var(--text3);
         }
 
         .review-text {
@@ -847,6 +788,25 @@
             color: var(--text2);
             line-height: 1.8;
             white-space: pre-wrap;
+        }
+
+        .review-reactions {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+            flex-wrap: wrap;
+        }
+
+        .reaction-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            padding: 2px 8px;
+            font-size: 12px;
+            background: var(--bg3);
+            border-radius: 12px;
+            color: var(--text2);
+            line-height: 1.6;
         }
 
         .ai-summary {
@@ -926,21 +886,14 @@
             max-height: 0;
         }
 
+        .collapsible.open {
+            max-height: 2000px;
+        }
+
         .run-area {
             padding: 12px 16px;
             border-top: 1px solid var(--border);
             background: var(--bg);
-        }
-
-        .error-msg {
-            color: var(--bad);
-            background: var(--bad-bg);
-            border: 1px solid var(--bad);
-            border-radius: 5px;
-            padding: 8px;
-            margin-top: 8px;
-            font-size: 12px;
-            display: none;
         }
 
         .course-filter-row {
@@ -987,12 +940,6 @@
             border-color: var(--border2);
         }
 
-        .course-filter-prof-select.has-value {
-            color: var(--text);
-            border-color: var(--border2);
-            max-width: 130px;
-        }
-
         .btn-remove-filter {
             flex-shrink: 0;
             background: none;
@@ -1026,21 +973,6 @@
             50% {
                 opacity: 0.4
             }
-        }
-
-
-        .upload-zone.drag-over {
-            background: var(--bg2);
-            border-color: var(--accent);
-        }
-
-        .modal-overlay.open {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .collapsible.open {
-            max-height: 1000px;
         }
 
 
@@ -1321,6 +1253,34 @@
 
     function toPersian(n) {
         return String(n).replace(/[0-9]/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+    }
+
+    function toPersianDate(dateStr) {
+        if (!dateStr) return '';
+        const m = dateStr.match(/(\d{2})\.(\d{2})\.(\d{4})/);
+
+        if (!m) return dateStr;
+        let d = parseInt(m[1]), mon = parseInt(m[2]), y = parseInt(m[3]);
+
+        const gdm = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+        const gy2 = mon > 2 ? y + 1 : y;
+
+        let days = 355666 + 365 * y + Math.floor((gy2 + 3) / 4) - Math.floor((gy2 + 99) / 100) + Math.floor((gy2 + 399) / 400) + d + gdm[mon - 1];
+        let jy = -1595 + 33 * Math.floor(days / 12053);
+
+        days %= 12053;
+        jy += 4 * Math.floor(days / 1461);
+        days %= 1461;
+
+        if (days > 365) {
+            jy += Math.floor((days - 1) / 365);
+            days = (days - 1) % 365;
+        }
+        let jm = days < 186 ? 1 + Math.floor(days / 31) : 7 + Math.floor((days - 186) / 30);
+        let jd = 1 + (days < 186 ? days % 31 : (days - 186) % 30);
+
+        const months = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
+        return `${toPersian(jd)} ${months[jm - 1]} ${toPersian(jy)}`;
     }
 
     const state = {
@@ -1819,15 +1779,6 @@
         return toPersian(t);
     }
 
-    function copyCourseId(courseId, label) {
-        if (!courseId) return;
-        const value = String(courseId);
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(value).catch(() => {
-            });
-        }
-    }
-
     function normalizeName(value) {
         return String(value ?? '')
             .replace(/ي/g, 'ی')
@@ -1942,10 +1893,10 @@
         return `
             <div class="combo-card">
                 <div class="combo-card-header">
-                    <button type="button" class="course-name course-name-copy" data-copy-id="${escapeHtml(group.class_id)}">
+                    <div class="course-name">
                         <span>${escapeHtml(subtitle)}</span>
                         <span class="course-count">(${toPersian(group.item_count || 0)} مورد)</span>
-                    </button>
+                    </div>
                 </div>
                 <div class="combo-body">${rows}</div>
             </div>`;
@@ -1987,19 +1938,10 @@
                 return;
             }
             area.innerHTML = `<div class="combo-grid">${groups.map(group => renderGroupCard(group, 'courses')).join('')}</div>`;
-            bindCopyButtons(area);
             bindProfChips(area);
         } catch (err) {
             area.innerHTML = emptyStateHtml('خطا در بارگذاری دروس');
         }
-    }
-
-    function bindCopyButtons(area) {
-        area.querySelectorAll('.course-name-copy').forEach(btn => {
-            btn.addEventListener('click', () => {
-                copyCourseId(btn.dataset.copyId, btn.textContent.trim());
-            });
-        });
     }
 
     function bindProfChips(area) {
@@ -2023,8 +1965,10 @@
                             <div class="review-item">
                                 <div class="review-header">
                                     <span class="review-course">${escapeHtml(normalized.course || 'نظریه')}</span>
+                                    ${normalized.date ? `<span class="review-date">${toPersianDate(normalized.date)}</span>` : ''}
                                 </div>
                                 ${normalized.text ? `<div class="review-text">${escapeHtml(normalized.text).replace(/\n/g, '<br>')}</div>` : ''}
+                                ${normalized.reactions && normalized.reactions.length ? `<div class="review-reactions">${normalized.reactions.map(r => `<span class="reaction-badge">${r.emoji}\uFE0F ${toPersian(r.count)}</span>`).join('')}</div>` : ''}
                             </div>`;
         }).join('')}</div>` : '<div class="review-item"><div class="review-text">نظری ثبت نشده است.</div></div>'}
                 </div>
@@ -2087,12 +2031,18 @@
             const courseMatch = review.match(/درس\s*:\s*([^|]+)/);
             return {
                 text: review,
-                course: courseMatch ? courseMatch[1].trim() : ''
+                course: courseMatch ? courseMatch[1].trim() : '',
+                date: '',
+                reactions: []
             };
         }
+        const raw = review?.review || review?.text || '';
+        const courseMatch = raw.match(/درس\s*:\s*([^|]+)/);
         return {
-            text: review?.text || review?.review || '',
-            course: review?.course || ''
+            text: raw,
+            course: courseMatch ? courseMatch[1].trim() : (review?.course || ''),
+            date: review?.date || '',
+            reactions: review?.reactions || []
         };
     }
 
@@ -2110,8 +2060,10 @@
                 <div class="review-item">
                     <div class="review-header">
                         <span class="review-course">${escapeHtml(r.course || 'درس نامشخص')}</span>
+                        ${r.date ? `<span class="review-date">${toPersianDate(r.date)}</span>` : ''}
                     </div>
                     ${r.text ? `<div class="review-text">${escapeHtml(r.text).replace(/\n/g, '<br>')}</div>` : ''}
+                    ${r.reactions && r.reactions.length ? `<div class="review-reactions">${r.reactions.map(rt => `<span class="reaction-badge">${rt.emoji}\uFE0F ${toPersian(rt.count)}</span>`).join('')}</div>` : ''}
                 </div>`).join('')}</div>` : ''}
         `;
     }
