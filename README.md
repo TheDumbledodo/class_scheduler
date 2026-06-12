@@ -66,8 +66,6 @@ uvicorn src.main:app --reload
 </p>
 
 
-## Technologies
-
 Built
 with [Jinja2](https://jinja.palletsprojects.com/), [BeautifulSoup](https://www.crummy.com/software/BeautifulSoup/), [FastAPI](https://fastapi.tiangolo.com/)
 and [OpenRouter](https://openrouter.ai/)
