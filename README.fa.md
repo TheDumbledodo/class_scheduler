@@ -64,20 +64,11 @@ uvicorn src.main:app --reload
 
 ## تصاویر
 
-<div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;">
-  <figure style="margin:0; text-align:center; flex:1; min-width:200px;">
-    <img src="screenshots/dashboard.png" alt="آپلود و فیلتر دروس">
-    <figcaption>لیست دروس</figcaption>
-  </figure>
-  <figure style="margin:0; text-align:center; flex:1; min-width:200px;">
-    <img src="screenshots/scheduler.png" alt="ترکیب‌های برنامه">
-    <figcaption>ترکیب‌های کلاسی</figcaption>
-  </figure>
-  <figure style="margin:0; text-align:center; flex:1; min-width:200px;">
-    <img src="screenshots/professors.png" alt="نظرات اساتید">
-    <figcaption>نظرات</figcaption>
-  </figure>
-</div>
+<p align="center">
+  <img src="screenshots/dashboard.png" width="450">
+  <img src="screenshots/scheduler.png" width="450">
+  <img src="screenshots/professors.png" width="450">
+</p>
 
 ---
 
