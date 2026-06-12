@@ -1,17 +1,7 @@
 import re
 from collections import defaultdict
 from bs4 import BeautifulSoup
-
-ARABIC_TO_PERSIAN_MAP = str.maketrans({
-    'ي': 'ی',
-    'آ': 'ا',
-})
-
-RE_DIACRITICS = re.compile(r'[\u064B-\u065F\u0670]')
-RE_TATWEEL = re.compile(r'\u0640+')
-RE_INVISIBLE_CHARS = re.compile(r'[\u200B-\u200F\u2028-\u202F\u2060-\u2064\uFEFF\u00AD]')
-RE_SEPARATORS = re.compile(r'[_\-]+')
-RE_MULTIPLE_SPACES = re.compile(r' {2,}')
+from src.persian_utils import normalize_persian
 
 RE_PROFESSOR = re.compile(
     r'نام\s*(?:کامل\s*)?استاد\s*[:\]][^\S\n]*([^\n]+)'
@@ -37,31 +27,21 @@ RE_BOX_DRAWING = re.compile(r'[─╭╰╯╮⬅️〰]+')
 RE_HASH_TAGS = re.compile(r'#.*$', re.MULTILINE)
 RE_HAS_WORD = re.compile(r'\w')
 
-# --- course noise ---
 RE_COURSE_SECTION_NOISE = re.compile(
     r'\s*(?:🔹\s*دروس(?:\s*تدریسی)?\s*[:\]]|📚\s*دروس\s*[:\]])\s*.*$'
 )
 
 
 def normalize(text: str) -> str:
-    if not text:
-        return ''
-
-    text = RE_DIACRITICS.sub('', text)
-    text = RE_TATWEEL.sub('', text)
-    text = RE_INVISIBLE_CHARS.sub(' ', text)
-    text = text.translate(ARABIC_TO_PERSIAN_MAP)
-    text = RE_SEPARATORS.sub(' ', text)
-    text = RE_MULTIPLE_SPACES.sub(' ', text)
-
-    return text.strip().lower()
+    text = normalize_persian(text)
+    return text.lower()
 
 
 def _prof_key(raw: str) -> str:
     key = normalize(raw)
     key = RE_COURSE_SECTION_NOISE.sub('', key)
 
-    return RE_MULTIPLE_SPACES.sub(' ', key).strip()
+    return ' '.join(key.split())
 
 
 def _extract_professor(text: str) -> str:

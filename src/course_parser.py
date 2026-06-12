@@ -1,6 +1,7 @@
 import re
 
 from bs4 import BeautifulSoup
+from src.persian_utils import normalize_persian
 
 WEEKDAYS = [
     "شنبه",
@@ -30,7 +31,7 @@ def parse_table_columns(table):
     columns = []
 
     for th in table.thead.tr.find_all("th"):
-        text = normalize_text(th.get_text(strip=True))
+        text = normalize_persian(th.get_text(strip=True))
 
         columns.append(text)
 
@@ -46,7 +47,7 @@ def parse_courses(table):
         columns_iter = iter(columns)
 
         for td in tr.find_all("td"):
-            column = normalize_text(next(columns_iter)).strip()
+            column = normalize_persian(next(columns_iter)).strip()
 
             if not column or td.find("img"):
                 continue
@@ -60,7 +61,7 @@ def parse_courses(table):
 
 
 def parse_value(value):
-    value = normalize_text(value)
+    value = normalize_persian(value)
 
     if value.isdigit():
         return int(value)
@@ -92,15 +93,6 @@ def parse_value(value):
         }
 
     return value
-
-
-def normalize_text(text: str) -> str:
-    return (
-        text.strip()
-        .replace('\u200c', ' ')
-        .replace('ي', 'ی')
-        .replace('ك', 'ک')
-    )
 
 
 def time_to_minutes(time):

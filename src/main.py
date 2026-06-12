@@ -9,8 +9,9 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 
 from src.ai_summarizer import summarize_professor
-from src.course_parser import parse_courses_with_columns, normalize_text
+from src.course_parser import parse_courses_with_columns
 from src.course_scheduler import CourseScheduler
+from src.persian_utils import normalize_persian
 from src.professor_review_parser import load_all_professor_reviews_from_strings, extract_reviews_for_professor
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -217,7 +218,7 @@ def serialize_course(course, cid=None):
 
 
 def normalize_lookup_text(value):
-    return normalize_text(str(value or "")).strip().casefold()
+    return normalize_persian(str(value or "")).casefold()
 
 
 def normalize_course_filter_rows(filters_list):
