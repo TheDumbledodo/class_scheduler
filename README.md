@@ -6,7 +6,6 @@
   <img src="screenshots/dashboard.png" alt="Class Scheduler Dashboard" width="3839">
 </p>
 
----
 
 ## The Course Registration Challenge
 
@@ -18,7 +17,6 @@ to avoid ending up with a difficult professor.
 This process takes about 2 to 3 hours every semester.
 Therefore, we invented a shortcut.
 
----
 
 ## The Shortcut
 
@@ -26,23 +24,21 @@ Therefore, we invented a shortcut.
 retrieves professor reviews from the Telegram channel
 [@wtiau_asatid](https://t.me/wtiau_asatid), and finds all possible combinations.
 
----
 
-## How to Obtain Course Files
+### How to Obtain Course Files
 
 1. Go to [https://eserv.iau.ir/](https://eserv.iau.ir/)
 2. **Academic Semester Planning** → **Search Offered Course Classes**
 3. Set **Number of Search Results Per Page** to the maximum
 4. Save the entire page as an `html` file using **Ctrl+S**
 
-## How to Obtain Professor Review Files
+### How to Obtain Professor Review Files
 
 1. Go to the Telegram channel [@wtiau_asatid](https://t.me/wtiau_asatid)
 2. Click the **three dots (⋮)** in the top right corner → **Export chat history**
 3. Click **Export** and download the file
 4. Inside the downloaded folder, you will find the `html` files
 
----
 
 ## How to Use
 
@@ -59,7 +55,6 @@ pip install -r requirements.txt
 uvicorn src.main:app --reload
 ```
 
----
 
 ## Screenshots
 
@@ -69,7 +64,6 @@ uvicorn src.main:app --reload
   <img src="screenshots/professors.png" width="450">
 </p>
 
----
 
 ## Technologies
 
