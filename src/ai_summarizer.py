@@ -1,20 +1,11 @@
-import os
-
 import openai
-from dotenv import load_dotenv
-
-load_dotenv()
 
 
-def summarize_professor(reviews, professor_name, api_key=None):
+def summarize_professor(reviews, professor_name, api_key):
     if not reviews:
         return "No reviews available."
 
-    key = api_key or os.getenv("OPENAI_API_KEY")
-    if not key:
-        return "No API key provided."
-
-    openai.api_key = key
+    openai.api_key = api_key
     openai.api_base = "https://openrouter.ai/api/v1"
 
     combined = "\n".join(str(r) for r in reviews[:20])
