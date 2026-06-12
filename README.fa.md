@@ -66,8 +66,6 @@ uvicorn src.main:app --reload
 </p>
 
 
-## تکنولوژی‌ها
-
 ساخته شده
 با [Jinja2](https://jinja.palletsprojects.com/) ،[BeautifulSoup](https://www.crummy.com/software/BeautifulSoup/) ،[FastAPI](https://fastapi.tiangolo.com/)
 و [OpenRouter](https://openrouter.ai/)
