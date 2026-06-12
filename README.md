@@ -1,4 +1,5 @@
 # Class Scheduler
+[فارسی](/README.fa.md)
 
 > A shortcut for semester planning at Azad University
 
