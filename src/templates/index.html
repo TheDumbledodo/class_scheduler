@@ -1522,7 +1522,17 @@
         }
 
         const fileKey = type === 'course' ? 'courseFiles' : 'profFiles';
-        state[fileKey] = files;
+        const existing = state[fileKey];
+        const existingNames = new Set(existing.map(f => f.name));
+
+        for (const f of files) {
+            if (existingNames.has(f.name)) {
+                const idx = existing.findIndex(e => e.name === f.name);
+                existing[idx] = f;
+            } else {
+                existing.push(f);
+            }
+        }
 
         await processUploadedFiles();
     }
