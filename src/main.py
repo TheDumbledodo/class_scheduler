@@ -4,23 +4,17 @@ import traceback
 from collections import defaultdict
 
 import unicodedata
-from fastapi import FastAPI, Request, status
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 
 from src.ai_summarizer import summarize_professor
 from src.course_parser import parse_courses_with_columns, normalize_text
 from src.course_scheduler import CourseScheduler
-from src.professor_review_parser import load_all_professor_reviews, extract_reviews_for_professor, strip_honorifics
+from src.professor_review_parser import load_all_professor_reviews_from_strings, extract_reviews_for_professor
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
-COURSES_FOLDER = os.path.join(UPLOAD_FOLDER, "courses")
-PROFS_FOLDER = os.path.join(UPLOAD_FOLDER, "professors")
 ALLOWED_EXTENSIONS = {'html'}
-
-os.makedirs(COURSES_FOLDER, exist_ok=True)
-os.makedirs(PROFS_FOLDER, exist_ok=True)
 
 app = FastAPI(title="Class Scheduler")
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "src", "templates"))
@@ -50,103 +44,39 @@ async def get_request_data(request: Request):
         return {}
 
 
-async def save_uploaded_files(files, folder):
-    for file in files:
-        if not file or not file.filename or not allowed_file(file.filename):
-            continue
-
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(folder, filename)
-        content = await file.read()
-
-        with open(filepath, "wb") as out:
-            out.write(content)
-
-
-def get_file_list(folder):
-    try:
-        return sorted([
-            f for f in os.listdir(folder)
-            if f.lower().endswith('.html')
-        ])
-    except FileNotFoundError:
-        return []
-
-
-parsed_courses = {}
-parsing_errors = []
-
-_course_parse_cache = None
-_prof_reviews_cache = {}
-
-
-def _file_mtime_snapshot(folder):
-    snap = {}
-
-    for fname in get_file_list(folder):
-        fpath = os.path.join(folder, fname)
-        try:
-            snap[fname] = os.path.getmtime(fpath)
-        except OSError:
-            snap[fname] = 0
-
-    return snap
-
-
-def _load_cached_reviews():
-    global _prof_reviews_cache
-
-    prof_files_state = _file_mtime_snapshot(PROFS_FOLDER)
-    cache_key = str(sorted(prof_files_state.items()))
-
-    if _prof_reviews_cache.get("key") != cache_key:
-        _prof_reviews_cache = {
-            "key": cache_key,
-            "data": load_all_professor_reviews(PROFS_FOLDER),
-        }
-
-    return _prof_reviews_cache["data"]
-
-
-def parse_all_courses():
-    global parsed_courses, parsing_errors, _course_parse_cache
-
-    current_files = _file_mtime_snapshot(COURSES_FOLDER)
-    if _course_parse_cache == current_files:
-        return
-
+def parse_courses_from_files(course_files):
     parsed_courses = {}
     parsing_errors = []
 
-    for fname in get_file_list(COURSES_FOLDER):
-        fpath = os.path.join(COURSES_FOLDER, fname)
-        try:
-            with open(fpath, 'r', encoding='utf-8') as f:
-                content = f.read()
-        except Exception as e:
-            parsing_errors.append(f"Could not read {fname}: {str(e)}")
+    for f in (course_files or []):
+        raw_name = f.get("name", "unknown.html")
+        content = f.get("content", "")
+
+        if not content or not allowed_file(raw_name):
             continue
+
+        name = secure_filename(raw_name)
 
         try:
             _, courses = parse_courses_with_columns(content)
         except Exception as e:
-            parsing_errors.append(f"Error parsing {fname}: {str(e)}")
+            parsing_errors.append(f"Error parsing {name}: {str(e)}")
             continue
 
         if not courses:
-            parsing_errors.append(f"No courses found in {fname}. Check if table id='scrollable' exists.")
+            parsing_errors.append(f"No courses found in {name}.")
             continue
 
         for idx, course in enumerate(courses):
-            unique_id = f"{fname}_{idx}"
-            course["__source_file"] = fname
+            unique_id = f"{name}_{idx}"
+            course["__source_file"] = name
             course["__source_row"] = idx + 1
             course["__source_id"] = unique_id
             course["__professor"] = get_course_professor(course)
             course["__course_name"] = get_course_name(course)
             parsed_courses[unique_id] = course
 
-    _course_parse_cache = current_files
+    return parsed_courses, parsing_errors
 
 
 def get_course_name(course):
@@ -173,8 +103,7 @@ def get_course_professor(course):
             value = course.get(key)
 
             if value not in (None, ""):
-                name = str(value).strip()
-                return strip_honorifics(name) or name
+                return str(value).strip()
 
     return None
 
@@ -195,8 +124,7 @@ def is_valid_course_row(course):
     return bool(get_course_professor(course))
 
 
-def build_dashboard_snapshot():
-    parse_all_courses()
+def build_dashboard_snapshot(parsed_courses):
     visible_courses = [course for course in parsed_courses.values() if is_valid_course_row(course)]
 
     prof_values = sorted(set(
@@ -213,9 +141,6 @@ def build_dashboard_snapshot():
 
     return {
         "columns": get_available_filter_columns(parsed_courses),
-        "course_files": get_file_list(COURSES_FOLDER),
-        "prof_files": get_file_list(PROFS_FOLDER),
-        "parsing_errors": parsing_errors,
         "prof_values": prof_values,
         "course_values": course_values,
         "course_professors": course_professors,
@@ -397,7 +322,7 @@ def group_courses_by_class_id(course_items):
     return grouped
 
 
-def visible_course_items():
+def visible_course_items(parsed_courses):
     return {
         cid: course
         for cid, course in parsed_courses.items()
@@ -449,158 +374,122 @@ def build_professor_summary(courses_list, all_reviews):
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    snapshot = build_dashboard_snapshot()
     return templates.TemplateResponse(
         request=request,
         name="index.html",
-        context={"request": request, **snapshot}
+        context={"request": request}
     )
 
 
-@app.post("/upload")
-async def upload(request: Request):
-    form = await request.form()
-    await save_uploaded_files(form.getlist("course_files"), COURSES_FOLDER)
-    await save_uploaded_files(form.getlist("prof_files"), PROFS_FOLDER)
-    return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
-
-
-@app.post("/api/upload")
-async def api_upload(request: Request):
+@app.post("/api/process")
+async def api_process(request: Request):
     try:
-        form = await request.form()
-        await save_uploaded_files(form.getlist("course_files"), COURSES_FOLDER)
-        await save_uploaded_files(form.getlist("prof_files"), PROFS_FOLDER)
+        data = await get_request_data(request)
+        course_files = data.get("course_files", [])
+        prof_files = data.get("prof_files", [])
 
-        snapshot = build_dashboard_snapshot()
+        parsed_courses, errors = parse_courses_from_files(course_files)
+        snapshot = build_dashboard_snapshot(parsed_courses)
+        snapshot["parsing_errors"] = errors
+
+        all_courses = [serialize_course(c, cid) for cid, c in parsed_courses.items() if is_valid_course_row(c)]
+        groups = group_courses_by_class_id(all_courses)
+
+        all_reviews = load_all_professor_reviews_from_strings({
+            f["name"]: f["content"] for f in (prof_files or [])
+        })
+        professors = build_professor_summary(all_courses, all_reviews)
 
         return json_response({
             "success": True,
             "state": snapshot,
-            "parsed_count": snapshot["course_count"]
+            "parsed_count": snapshot["course_count"],
+            "courses": all_courses,
+            "groups": groups,
+            "professors": professors
         })
     except Exception as e:
+        traceback.print_exc()
         return json_response({"success": False, "error": str(e)}, status_code=500)
-
-
-@app.get("/api/files")
-async def api_files():
-    snapshot = build_dashboard_snapshot()
-    return json_response(snapshot)
-
-
-@app.delete("/api/files/courses/{filename}")
-async def delete_course_file(filename: str):
-    filepath = os.path.join(COURSES_FOLDER, filename)
-
-    if os.path.exists(filepath) and allowed_file(filename):
-        os.remove(filepath)
-        return json_response({"success": True, "state": build_dashboard_snapshot()})
-
-    return json_response({"success": False, "error": "File not found"}, status_code=404)
-
-
-@app.delete("/api/files/profs/{filename}")
-async def delete_prof_file(filename: str):
-    filepath = os.path.join(PROFS_FOLDER, filename)
-
-    if os.path.exists(filepath) and allowed_file(filename):
-        os.remove(filepath)
-        return json_response({"success": True, "state": build_dashboard_snapshot()})
-
-    return json_response({"success": False, "error": "File not found"}, status_code=404)
-
-
-@app.delete("/api/files/all")
-async def delete_all_files():
-    for fname in os.listdir(COURSES_FOLDER):
-        fpath = os.path.join(COURSES_FOLDER, fname)
-        if os.path.isfile(fpath):
-            os.remove(fpath)
-
-    for fname in os.listdir(PROFS_FOLDER):
-        fpath = os.path.join(PROFS_FOLDER, fname)
-        if os.path.isfile(fpath):
-            os.remove(fpath)
-
-    return json_response({"success": True, "state": build_dashboard_snapshot()})
-
-
-@app.get("/api/columns")
-async def api_columns():
-    parse_all_courses()
-    return json_response(get_available_filter_columns(parsed_courses))
-
-
-@app.get("/api/column_values")
-async def api_column_values(column: str = ""):
-    column = column.strip()
-
-    if not column:
-        return json_response([])
-
-    values = set()
-
-    for c in parsed_courses.values():
-        val = c.get(column)
-        if val is not None and not isinstance(val, (tuple, list, dict)):
-            values.add(str(val))
-
-    return json_response(sorted(values))
 
 
 @app.post("/api/courses")
 async def api_courses(request: Request):
-    parse_all_courses()
-    data = await get_request_data(request)
-    filters_list = data.get("filters", [])
-    rows = normalize_course_filter_rows(filters_list)
-    visible_courses = visible_course_items()
-    filtered = filter_courses_by_rows(visible_courses, rows) if rows else visible_courses
-    courses_list = [serialize_course(course, cid) for cid, course in filtered.items()]
+    try:
+        data = await get_request_data(request)
+        course_files = data.get("course_files", [])
+        filters_list = data.get("filters", [])
 
-    return json_response({
-        "courses": courses_list,
-        "groups": group_courses_by_class_id(courses_list),
-    })
+        parsed_courses, _ = parse_courses_from_files(course_files)
+        rows = normalize_course_filter_rows(filters_list)
+        visible = visible_course_items(parsed_courses)
+        filtered = filter_courses_by_rows(visible, rows) if rows else visible
+        courses_list = [serialize_course(course, cid) for cid, course in filtered.items()]
+
+        return json_response({
+            "courses": courses_list,
+            "groups": group_courses_by_class_id(courses_list),
+        })
+    except Exception as e:
+        traceback.print_exc()
+        return json_response({"error": str(e)}, status_code=500)
 
 
-@app.get("/api/professors")
-async def api_professors():
-    parse_all_courses()
-    all_reviews = _load_cached_reviews()
-    courses_list = [serialize_course(course, cid) for cid, course in visible_course_items().items()]
-    profs = build_professor_summary(courses_list, all_reviews)
+@app.post("/api/professors")
+async def api_professors(request: Request):
+    try:
+        data = await get_request_data(request)
+        course_files = data.get("course_files", [])
+        prof_files = data.get("prof_files", [])
 
-    return json_response({
-        "professors": profs,
-        "class_groups": group_courses_by_class_id(courses_list),
-    })
+        parsed_courses, _ = parse_courses_from_files(course_files)
+        all_reviews = load_all_professor_reviews_from_strings({
+            f["name"]: f["content"] for f in (prof_files or [])
+        })
+        courses_list = [serialize_course(course, cid) for cid, course in visible_course_items(parsed_courses).items()]
+        profs = build_professor_summary(courses_list, all_reviews)
+
+        return json_response({
+            "professors": profs,
+            "class_groups": group_courses_by_class_id(courses_list),
+        })
+    except Exception as e:
+        traceback.print_exc()
+        return json_response({"error": str(e)}, status_code=500)
 
 
 @app.post("/api/professor/{name}")
 async def api_professor_detail(name: str, request: Request):
-    data = await get_request_data(request)
-    api_key = data.get("api_key", "")
-    all_reviews = _load_cached_reviews()
-    revs = extract_reviews_for_professor(all_reviews, name)
-    summary = None
+    try:
+        data = await get_request_data(request)
+        prof_files = data.get("prof_files", [])
+        api_key = data.get("api_key", "")
 
-    if api_key and revs:
-        summary = summarize_professor(revs, name, api_key=api_key)
+        all_reviews = load_all_professor_reviews_from_strings({
+            f["name"]: f["content"] for f in (prof_files or [])
+        })
+        revs = extract_reviews_for_professor(all_reviews, name)
+        summary = None
 
-    return json_response({
-        "name": name,
-        "reviews": revs,
-        "summary": summary
-    })
+        if api_key and revs:
+            review_texts = [r['review'] if isinstance(r, dict) else r for r in revs]
+            summary = summarize_professor(review_texts, name, api_key=api_key)
+
+        return json_response({
+            "name": name,
+            "reviews": revs,
+            "summary": summary
+        })
+    except Exception as e:
+        return json_response({"error": str(e)}, status_code=500)
 
 
 @app.post("/api/filter")
 async def api_filter(request: Request):
     try:
-        parse_all_courses()
         data = await get_request_data(request)
+        course_files = data.get("course_files", [])
+        prof_files = data.get("prof_files", [])
         filters_list = data.get("filters", [])
         settings = data.get("settings", {})
         api_key = data.get("api_key", "")
@@ -610,21 +499,24 @@ async def api_filter(request: Request):
         if time_from is not None and time_to is not None and time_from >= time_to:
             return json_response({"error": "محدوده زمانی نامعتبر"}, status_code=400)
 
+        parsed_courses, _ = parse_courses_from_files(course_files)
         rows = normalize_course_filter_rows(filters_list)
 
-        visible_courses = visible_course_items()
+        visible = visible_course_items(parsed_courses)
 
         if not rows or not any(row.get("course_name") for row in rows):
             return json_response({"error": "At least one class is required."}, status_code=400)
 
-        filtered = filter_courses_by_rows(visible_courses, rows)
+        filtered = filter_courses_by_rows(visible, rows)
 
         scheduler = CourseScheduler(filtered, settings=settings)
         combinations = scheduler.get_top_combinations(
             top_n=settings.get("top_n", 5)
         )
 
-        all_reviews = load_all_professor_reviews(PROFS_FOLDER)
+        all_reviews = load_all_professor_reviews_from_strings({
+            f["name"]: f["content"] for f in (prof_files or [])
+        })
 
         results = []
 
@@ -633,7 +525,7 @@ async def api_filter(request: Request):
             profs_seen = {}
 
             for cid in combo:
-                course = scheduler.courses.get(cid, {})
+                course = filtered.get(cid, {})
                 sched = scheduler.class_schedules.get(cid)
                 exam = scheduler.exams.get(cid)
                 prof_name = None
@@ -676,69 +568,7 @@ async def api_filter(request: Request):
         return json_response({"error": str(e)}, status_code=500)
 
 
-def build_filters(filters_list):
-    filters = {}
-
-    for f in filters_list:
-        col = f.get("column", "").strip()
-        val = f.get("value", "").strip()
-
-        if not col or not val:
-            continue
-
-        if col in ("نام استاد", "استاد", "professor"):
-            col = "__professor"
-        elif col in ("نام درس", "درس", "course_name"):
-            col = "__course_name"
-
-        if ',' in val:
-            try:
-                parsed_val = [int(v.strip()) for v in val.split(',') if v.strip()]
-                current = filters.get(col)
-
-                if current is None:
-                    filters[col] = parsed_val
-                elif isinstance(current, list):
-                    for item in parsed_val:
-                        if item not in current:
-                            current.append(item)
-                else:
-                    merged = [current]
-                    for item in parsed_val:
-                        if item not in merged:
-                            merged.append(item)
-                    filters[col] = merged
-            except ValueError:
-                current = filters.get(col)
-
-                if current is None:
-                    filters[col] = val
-                elif isinstance(current, list):
-                    if val not in current:
-                        current.append(val)
-                else:
-                    filters[col] = [current, val] if current != val else current
-        else:
-            try:
-                parsed_val = int(val)
-            except ValueError:
-                parsed_val = val
-
-            current = filters.get(col)
-
-            if current is None:
-                filters[col] = parsed_val
-            elif isinstance(current, list):
-                if parsed_val not in current:
-                    current.append(parsed_val)
-            else:
-                if current != parsed_val:
-                    filters[col] = [current, parsed_val]
-    return filters
-
-
 if __name__ == "__main__":
-    parse_all_courses()
     import uvicorn
 
     uvicorn.run(app, host="127.0.0.1", port=8000)

@@ -1032,7 +1032,7 @@
                 <div class="file-list" id="fileList"></div>
             </div>
             <div class="sidebar-section">
-                <div class="section-label">فایل‌های نظرات استادان</div>
+                <div class="section-label">فایل‌های نظرات اساتید</div>
                 <div class="upload-zone" id="reviewUploadZone">
                     <svg fill="none" stroke="currentColor" stroke-width="1.5"
                          style="width:22px;height:22px;margin-bottom:6px;opacity:0.5" viewBox="0 0 24 24">
@@ -1041,8 +1041,8 @@
                         <line x1="12" x2="12" y1="3" y2="15"/>
                     </svg>
                     <div>فایل نظرات را بکشید یا کلیک کنید</div>
-                    <label class="sr-only" for="reviewFileInput">بارگذاری فایل‌های نظرات استادان</label>
-                    <input accept=".html,.htm" aria-label="بارگذاری فایل‌های نظرات استادان" id="reviewFileInput"
+                    <label class="sr-only" for="reviewFileInput">بارگذاری فایل‌های نظرات اساتید</label>
+                    <input accept=".html,.htm" aria-label="بارگذاری فایل‌های نظرات اساتید" id="reviewFileInput"
                            multiple style="display:none" type="file">
                 </div>
                 <div class="file-list" id="reviewFileList"></div>
@@ -1301,12 +1301,17 @@
             timeTo: 20 * 60
         },
         profSummaries: {},
-        snapshot: {}
+        snapshot: {},
+        courseFiles: [],
+        profFiles: [],
+        cachedCourses: [],
+        cachedGroups: [],
+        cachedProfessors: []
     };
 
     let filterColumns = [];
-    let courseFiles = [];
-    let profFiles = [];
+    let courseFileNames = [];
+    let profFileNames = [];
     let parsingErrors = [];
 
     const uploadZone = document.getElementById('uploadZone');
@@ -1317,10 +1322,8 @@
 
     async function bootstrap() {
         bindStaticControls();
-        await refreshDashboard();
         renderCourseFilterRows();
         updateRunButtonState();
-        updateCounts();
         renderContent();
     }
 
@@ -1337,8 +1340,8 @@
         state.snapshot = snapshot || {};
         state.schedulerRun = false;
         filterColumns = [...(state.snapshot.columns || [])];
-        courseFiles = [...(state.snapshot.course_files || [])];
-        profFiles = [...(state.snapshot.prof_files || [])];
+        courseFileNames = (state.courseFiles || []).map(f => f.name);
+        profFileNames = (state.profFiles || []).map(f => f.name);
         parsingErrors = [...(state.snapshot.parsing_errors || [])];
         populateFilterDropdowns(state.snapshot);
         renderFileLists();
@@ -1365,15 +1368,15 @@
         const courseList = document.getElementById('fileList');
         const reviewList = document.getElementById('reviewFileList');
 
-        courseList.innerHTML = courseFiles.map(f => `
+        courseList.innerHTML = (state.courseFiles || []).map(f => `
             <div class="file-item">
-              <span class="file-name">${escapeHtml(f)}</span>
-              <span class="file-remove" data-file="${escapeHtml(f)}" data-type="course">×</span>
+              <span class="file-name">${escapeHtml(f.name)}</span>
+              <span class="file-remove" data-file="${escapeHtml(f.name)}" data-type="course">×</span>
             </div>`).join('');
-        reviewList.innerHTML = profFiles.map(f => `
+        reviewList.innerHTML = (state.profFiles || []).map(f => `
             <div class="file-item">
-              <span class="file-name">${escapeHtml(f)}</span>
-              <span class="file-remove" data-file="${escapeHtml(f)}" data-type="prof">×</span>
+              <span class="file-name">${escapeHtml(f.name)}</span>
+              <span class="file-remove" data-file="${escapeHtml(f.name)}" data-type="prof">×</span>
             </div>`).join('');
 
         document.querySelectorAll('.file-remove').forEach(btn => {
@@ -1381,7 +1384,9 @@
                 e.stopPropagation();
                 const filename = btn.dataset.file;
                 const type = btn.dataset.type;
-                await deleteFile(filename, type);
+                const fileKey = type === 'course' ? 'courseFiles' : 'profFiles';
+                state[fileKey] = state[fileKey].filter(f => f.name !== filename);
+                await processUploadedFiles();
             });
         });
     }
@@ -1476,71 +1481,76 @@
         });
 
         document.getElementById('clearAll').addEventListener('click', async () => {
-            try {
-                const resp = await fetch('/api/files/all', {method: 'DELETE'});
-                const data = await resp.json();
-                if (data.success) {
-                    state.filters = [];
-                    state.combinations = [];
-                    applySnapshot(data.state || {});
-                    renderCourseFilterRows();
-                    updateRunButtonState();
-                    renderContent();
-                    updateCounts();
-                } else {
-                    alert('خطا در حذف فایل‌ها');
-                }
-            } catch (err) {
-                alert('خطا در ارتباط با سرور');
-            }
+            state.courseFiles = [];
+            state.profFiles = [];
+            state.filters = [];
+            state.combinations = [];
+            state.snapshot = {};
+            state.cachedCourses = [];
+            state.cachedGroups = [];
+            state.cachedProfessors = [];
+            state.profSummaries = {};
+            courseFileNames = [];
+            profFileNames = [];
+            parsingErrors = [];
+            renderFileLists();
+            renderCourseFilterRows();
+            updateRunButtonState();
+            renderContent();
+            updateCounts();
         });
 
     }
 
     bootstrap();
 
-    async function deleteFile(filename, type) {
-        try {
-            const endpoint = type === 'course'
-                ? `/api/files/courses/${encodeURIComponent(filename)}`
-                : `/api/files/profs/${encodeURIComponent(filename)}`;
-            const resp = await fetch(endpoint, {method: 'DELETE'});
-            const data = await resp.json();
-            if (data.success) {
-                await refreshDashboard(data.state || {});
-                updateCounts();
-                renderContent();
-            } else {
-                alert('خطا در حذف فایل');
-            }
-        } catch (err) {
-            alert('خطا در ارتباط با سرور');
-        }
-    }
-
     async function handleFiles(fileList, type) {
-        const formData = new FormData();
-        let count = 0;
+        const files = [];
+
         for (const file of fileList) {
-            formData.append(type === 'course' ? 'course_files' : 'prof_files', file);
-            count++;
+            if (!file.name.toLowerCase().endsWith('.html')) {
+                alert(`فایل ${file.name} فرمت معتبری ندارد. فقط فایل‌های HTML پشتیبانی می‌شوند.`);
+                return;
+            }
+            const content = await file.text();
+            files.push({name: file.name, content});
         }
 
-        if (count === 0) {
+        if (files.length === 0) {
             alert('هیچ فایلی انتخاب نشده است.');
             return;
         }
 
+        const fileKey = type === 'course' ? 'courseFiles' : 'profFiles';
+        state[fileKey] = files;
+
+        await processUploadedFiles();
+    }
+
+    async function processUploadedFiles() {
+        if (!state.courseFiles.length && !state.profFiles.length) return;
+
         try {
-            const resp = await fetch('/api/upload', {method: 'POST', body: formData});
+            const resp = await fetch('/api/process', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    course_files: state.courseFiles,
+                    prof_files: state.profFiles
+                })
+            });
             const data = await resp.json();
+
             if (data.success) {
-                await refreshDashboard(data.state || {});
+                state.cachedCourses = data.courses || [];
+                state.cachedGroups = data.groups || [];
+                state.cachedProfessors = data.professors || [];
+
+                applySnapshot(data.state || {});
                 updateCounts();
                 renderContent();
             } else {
                 alert('خطا در بارگذاری: ' + (data.error || 'نامشخص'));
-
             }
         } catch (err) {
             alert('خطا در ارتباط با سرور');
@@ -1633,7 +1643,11 @@
             const resp = await fetch('/api/filter', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({filters, settings, api_key})
+                body: JSON.stringify({
+                    course_files: state.courseFiles,
+                    prof_files: state.profFiles,
+                    filters, settings, api_key
+                })
             });
             const results = await resp.json();
             if (results.error) {
@@ -1674,22 +1688,8 @@
     }
 
     function updateCounts() {
-        fetch('/api/courses', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({filters: []})
-        })
-            .then(r => r.json())
-            .then(d => {
-                document.getElementById('coursesCount').textContent = toPersian((d.courses || []).length);
-            });
-
-        fetch('/api/professors')
-            .then(r => r.json())
-            .then(d => {
-                document.getElementById('profsCount').textContent = toPersian((d.professors || []).length);
-            });
-
+        document.getElementById('coursesCount').textContent = toPersian(state.cachedCourses.length);
+        document.getElementById('profsCount').textContent = toPersian(state.cachedProfessors.length);
         document.getElementById('combosCount').textContent = toPersian(state.combinations.length);
     }
 
@@ -1708,20 +1708,6 @@
             fetchAndRenderProfessors(area);
         } else if (state.activeTab === 'courses') {
             fetchAndRenderCourses(area);
-        }
-    }
-
-    async function refreshDashboard(snapshot) {
-        if (snapshot && snapshot.columns) {
-            applySnapshot(snapshot);
-            return;
-        }
-        try {
-            const resp = await fetch('/api/files');
-            const data = await resp.json();
-            applySnapshot(data);
-        } catch (err) {
-            applySnapshot(snapshot || {});
         }
     }
 
@@ -1903,45 +1889,85 @@
     }
 
     async function fetchAndRenderProfessors(area) {
-        try {
-            const resp = await fetch('/api/professors');
-            const data = await resp.json();
-            const professors = filterProfessorsByScope(data.professors || []);
-            document.getElementById('profsCount').textContent = toPersian(professors.length);
-            if (!professors.length) {
-                area.innerHTML = emptyStateHtml('هیچ استادی یافت نشد');
-                return;
-            }
-            area.innerHTML = `<div class="combo-grid">${professors.map(prof => renderProfessorReviewCard(prof)).join('')}</div>`;
-            bindProfChips(area);
-        } catch (err) {
-            area.innerHTML = emptyStateHtml('خطا در بارگذاری اساتید');
+        const professors = filterProfessorsByScope(state.cachedProfessors || []);
+        document.getElementById('profsCount').textContent = toPersian(professors.length);
+        if (!professors.length) {
+            area.innerHTML = emptyStateHtml('هیچ استادی یافت نشد');
+            return;
         }
+        area.innerHTML = `<div class="combo-grid">${professors.map(prof => renderProfessorReviewCard(prof)).join('')}</div>`;
+        bindProfChips(area);
     }
 
     async function fetchAndRenderCourses(area) {
+        if (!state.cachedCourses.length) {
+            area.innerHTML = emptyStateHtml('هنوز فایلی بارگذاری نشده');
+            return;
+        }
         const filters = state.filters.map(f => ({
             course_name: f.course_name,
             professor: f.professor || ''
         }));
-        try {
-            const resp = await fetch('/api/courses', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({filters})
-            });
-            const data = await resp.json();
-            const groups = data.groups || [];
-            document.getElementById('coursesCount').textContent = toPersian((data.courses || []).length);
-            if (!groups.length) {
-                area.innerHTML = emptyStateHtml('درسی یافت نشد');
-                return;
-            }
-            area.innerHTML = `<div class="combo-grid">${groups.map(group => renderGroupCard(group, 'courses')).join('')}</div>`;
-            bindProfChips(area);
-        } catch (err) {
-            area.innerHTML = emptyStateHtml('خطا در بارگذاری دروس');
+        const hasFilters = filters.some(f => f.course_name);
+        const filtered = hasFilters
+            ? state.cachedCourses.filter(c => filters.some(r => courseMatchesFilter(c, r)))
+            : state.cachedCourses;
+        const groups = groupCourseItems(filtered);
+        document.getElementById('coursesCount').textContent = toPersian(filtered.length);
+        if (!groups.length) {
+            area.innerHTML = emptyStateHtml('درسی یافت نشد');
+            return;
         }
+        area.innerHTML = `<div class="combo-grid">${groups.map(group => renderGroupCard(group, 'courses')).join('')}</div>`;
+        bindProfChips(area);
+    }
+
+    function normalizeFilterText(text) {
+        return String(text ?? '')
+            .replace(/\u200c/g, ' ')
+            .replace(/ي/g, 'ی')
+            .replace(/ك/g, 'ک')
+            .trim()
+            .toLowerCase();
+    }
+
+    function courseMatchesFilter(course, row) {
+        const cName = (row.course_name || '').trim();
+        const prof = (row.professor || '').trim();
+        if (cName && normalizeFilterText(course.course_name) !== normalizeFilterText(cName)) return false;
+        if (prof && normalizeFilterText(course.professor) !== normalizeFilterText(prof)) return false;
+        return !!(cName || prof);
+    }
+
+    function groupCourseItems(items) {
+        const map = {};
+        for (const item of items) {
+            const key = item.class_id || item.id || item.unique_id || 'نامشخص';
+            if (!map[key]) map[key] = [];
+            map[key].push(item);
+        }
+        const sorted = Object.entries(map).sort(([a], [b]) => a.localeCompare(b));
+        return sorted.map(([classId, groupItems]) => {
+            groupItems.sort((a, b) => {
+                const aDay = a.class_time?.weekday ?? 99;
+                const bDay = b.class_time?.weekday ?? 99;
+                if (aDay !== bDay) return aDay - bDay;
+                const aStart = a.class_time?.start ?? Number.MAX_SAFE_INTEGER;
+                const bStart = b.class_time?.start ?? Number.MAX_SAFE_INTEGER;
+                if (aStart !== bStart) return aStart - bStart;
+                return (a.course_name || '').localeCompare(b.course_name || '');
+            });
+            const courseNames = [...new Set(groupItems.map(i => i.course_name).filter(Boolean))].sort();
+            const professors = [...new Set(groupItems.map(i => i.professor).filter(Boolean))].sort();
+            return {
+                class_id: classId,
+                course_name: courseNames[0] || 'Unknown',
+                course_names: courseNames,
+                professors: professors,
+                items: groupItems,
+                item_count: groupItems.length
+            };
+        });
     }
 
     function bindProfChips(area) {
@@ -2017,7 +2043,10 @@
             const resp = await fetch(`/api/professor/${encodeURIComponent(name)}`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({api_key: apiKey})
+                body: JSON.stringify({
+                    prof_files: state.profFiles,
+                    api_key: apiKey
+                })
             });
             const data = await resp.json();
             renderProfModalBody(body, data);
