@@ -1,4 +1,5 @@
 # Class Scheduler
+
 [فارسی](/README.fa.md)
 
 > A shortcut for semester planning at Azad University
@@ -6,7 +7,6 @@
 <p>
   <img src="screenshots/dashboard.png" alt="Class Scheduler Dashboard" width="3839">
 </p>
-
 
 ## The Course Registration Challenge
 
@@ -18,13 +18,12 @@ to avoid ending up with a difficult professor.
 This process takes about 2 to 3 hours every semester.
 Therefore, we invented a shortcut.
 
-
 ## The Shortcut
 
 **Class Scheduler** extracts course information from the [eserv.iau.ir](https://eserv.iau.ir/) portal and also
 retrieves professor reviews from the Telegram channel
 [@wtiau_asatid](https://t.me/wtiau_asatid), and finds all possible combinations.
-
+You can also view **AI-generated** summaries of professor reviews.
 
 ### How to Obtain Course Files
 
@@ -40,7 +39,6 @@ retrieves professor reviews from the Telegram channel
 3. Click **Export** and download the file
 4. Inside the downloaded folder, you will find the `html` files
 
-
 ## How to Use
 
 1. Upload the **course `html` files**
@@ -55,7 +53,6 @@ pip install -r requirements.txt
 
 uvicorn src.main:app --reload
 ```
-
 
 ## Screenshots
 
