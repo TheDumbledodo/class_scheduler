@@ -16,9 +16,7 @@ function renderCombos(area) {
     }
 
     area.innerHTML = `<div class="combo-grid">${state.combinations.map((combo, ci) => renderComboCard(combo, ci)).join('')}</div>`;
-    area.querySelectorAll('.prof-chip').forEach(chip => {
-        chip.addEventListener('click', () => openProfModal(chip.dataset.prof));
-    });
+    bindProfChips(area);
 }
 
 function renderComboCard(combo, idx) {
@@ -177,7 +175,14 @@ function groupCourseItems(items) {
 
 function bindProfChips(area) {
     area.querySelectorAll('.prof-chip').forEach(chip => {
-        chip.addEventListener('click', () => openProfModal(chip.dataset.prof));
+        const name = chip.dataset.prof;
+        const cached = state.profSummaries[name];
+
+        if (cached && cached.reviews && cached.reviews.length) {
+            chip.addEventListener('click', () => openProfModal(name));
+            return
+        }
+        chip.classList.add('disabled');
     });
 }
 
@@ -270,7 +275,7 @@ function renderProfModalBody(body, data) {
                     </div>
                     ${r.text ? `<div class="review-text">${escapeHtml(r.text).replace(/\n/g, '<br>')}</div>` : ''}
                     ${r.reactions && r.reactions.length ? `<div class="review-reactions">${r.reactions.map(rt => `<span class="reaction-badge">${rt.emoji}\uFE0F ${toPersian(rt.count)}</span>`).join('')}</div>` : ''}
-                </div>`).join('')}</div>` : !summary ? '<div class="review-item"><div class="review-text">نظری ثبت نشده است.</div></div>' : ''}
+                </div>`).join('')}</div>` : ''}
         `;
 }
 

@@ -687,6 +687,12 @@ html, body {
     background: var(--bg3);
 }
 
+.prof-chip.disabled {
+    opacity: 0.65;
+    cursor: default;
+    pointer-events: none;
+}
+
 .modal-overlay {
     position: fixed;
     inset: 0;
