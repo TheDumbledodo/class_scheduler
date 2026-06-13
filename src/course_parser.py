@@ -15,14 +15,14 @@ WEEKDAYS = [
 
 
 def parse_courses_with_columns(content):
-    soup = BeautifulSoup(content, "html.parser")
+    soup = BeautifulSoup(content, "lxml")
     table = soup.find("table", id="scrollable")
 
     if not table:
         return [], []
 
     columns = parse_table_columns(table)
-    courses = parse_courses(table)
+    courses = parse_courses(table, columns)
 
     return columns, courses
 
@@ -38,9 +38,8 @@ def parse_table_columns(table):
     return columns
 
 
-def parse_courses(table):
+def parse_courses(table, columns):
     courses = []
-    columns = parse_table_columns(table)
 
     for tr in table.tbody.find_all("tr"):
         course = {}

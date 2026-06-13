@@ -6,6 +6,7 @@ from collections import defaultdict
 import unicodedata
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from src.ai_summarizer import summarize_professor
@@ -18,6 +19,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ALLOWED_EXTENSIONS = {'html'}
 
 app = FastAPI(title="Class Scheduler")
+app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "src", "static")), name="static")
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "src", "templates"))
 
 
@@ -474,7 +476,7 @@ async def api_professor_detail(name: str, request: Request):
 
         if api_key and revs:
             review_texts = [r['review'] if isinstance(r, dict) else r for r in revs]
-            summary = summarize_professor(review_texts, name, api_key=api_key)
+            summary = await summarize_professor(review_texts, name, api_key=api_key)
 
         return json_response({
             "name": name,
@@ -549,13 +551,9 @@ async def api_filter(request: Request):
 
                 if prof_name and prof_name not in profs_seen:
                     revs = extract_reviews_for_professor(all_reviews, prof_name)
-                    review_texts = [r['review'] if isinstance(r, dict) else r for r in revs]
-                    summary = None
-                    if api_key and revs:
-                        summary = summarize_professor(review_texts, prof_name, api_key=api_key)
                     profs_seen[prof_name] = {
                         "reviews": revs,
-                        "summary": summary
+                        "summary": None
                     }
             results.append({
                 "combo": combo_info,

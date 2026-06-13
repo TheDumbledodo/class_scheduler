@@ -3,7 +3,6 @@ import re
 ARABIC_TO_PERSIAN = str.maketrans({
     'ك': 'ک',
     'ي': 'ی',
-    'آ': 'ا',
 })
 
 RE_DIACRITICS = re.compile(r'[\u064B-\u065F\u0670]')
