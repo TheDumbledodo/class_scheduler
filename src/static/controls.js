@@ -9,7 +9,7 @@ const state = {
         top_n: 5,
         chainWeight: 5,
         gapThreshold: 45,
-        fewDaysWeight: 3,
+        fewDaysWeight: true,
         spreadExams: false,
         timeFrom: 7 * 60,
         timeTo: 20 * 60,
@@ -20,14 +20,10 @@ const state = {
     courseFiles: [],
     reviewFiles: [],
     cachedCourses: [],
-    cachedGroups: [],
     cachedProfessors: []
 };
 
-let filterColumns = [];
-let courseFileNames = [];
-let reviewFileNames = [];
-let parsingErrors = [];
+
 
 const uploadZone = document.getElementById('uploadZone');
 const fileInput = document.getElementById('fileInput');
@@ -45,10 +41,6 @@ async function bootstrap() {
 function applySnapshot(snapshot) {
     state.snapshot = snapshot || {};
     state.schedulerRun = false;
-    filterColumns = [...(state.snapshot.columns || [])];
-    courseFileNames = (state.courseFiles || []).map(f => f.name);
-    reviewFileNames = (state.reviewFiles || []).map(f => f.name);
-    parsingErrors = [...(state.snapshot.parsing_errors || [])];
 
     populateFilterDropdowns(state.snapshot);
     renderFileLists();
@@ -157,7 +149,7 @@ function bindStaticControls() {
         state.settings.timeTo = parseInt(e.target.value);
     });
 
-    ['chainWeight', 'gapThreshold', 'fewDaysWeight'].forEach(id => {
+    ['chainWeight', 'gapThreshold'].forEach(id => {
         const element = document.getElementById(id);
         const valSpan = document.getElementById(id + 'Val');
 
@@ -166,6 +158,8 @@ function bindStaticControls() {
             state.settings[id] = parseInt(element.value);
         });
     });
+
+    document.getElementById('fewDaysWeight').addEventListener('change', e => state.settings.fewDaysWeight = e.target.checked);
 
     document.getElementById('topN').addEventListener('input', e => state.settings.top_n = parseInt(e.target.value) || 5);
     document.getElementById('spreadExams').addEventListener('change', e => state.settings.spreadExams = e.target.checked);
@@ -207,13 +201,8 @@ function bindStaticControls() {
         state.combinations = [];
         state.snapshot = {};
         state.cachedCourses = [];
-        state.cachedGroups = [];
         state.cachedProfessors = [];
         state.profSummaries = {};
-
-        courseFileNames = [];
-        reviewFileNames = [];
-        parsingErrors = [];
 
         renderFileLists();
         renderCourseFilterRows();
@@ -273,7 +262,6 @@ async function processUploadedFiles() {
 
         if (data.success) {
             state.cachedCourses = data.courses || [];
-            state.cachedGroups = data.groups || [];
             state.cachedProfessors = data.professors || [];
             state.profSummaries = {};
 
@@ -377,7 +365,7 @@ async function runScheduler() {
         top_n: state.settings.top_n,
         chain_weight: state.settings.chainWeight,
         gap_threshold: state.settings.gapThreshold,
-        few_days_weight: state.settings.fewDaysWeight,
+        few_days_weight: state.settings.fewDaysWeight ? 3 : 0,
         spread_exams: state.settings.spreadExams,
         time_from: state.settings.timeFrom,
         time_to: state.settings.timeTo,

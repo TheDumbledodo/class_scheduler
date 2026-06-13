@@ -12,7 +12,7 @@
 <body>
 <div class="app">
     <aside class="sidebar">
-        <div class="topbar" style="border-bottom:1px solid var(--border);">
+        <div class="topbar">
             <span class="topbar-title"><svg fill="none" height="18" stroke="currentColor" stroke-linecap="round"
                                             stroke-linejoin="round"
                                             stroke-width="2" style="vertical-align:middle;margin-left:4px"
@@ -190,20 +190,14 @@
                                 (دقیقه)</label>
                             <div class="range-row">
                                 <input aria-label="حداکثر فاصله برای زنجیر شدن کلاس‌ها (دقیقه)" class="range-input"
-                                       id="gapThreshold" max="120" min="0" step="5" type="range" value="45">
+                                       id="gapThreshold" max="240" min="0" step="5" type="range" value="45">
                                 <span class="range-val" id="gapThresholdVal">۴۵</span>
                             </div>
                         </div>
-                        <div>
-                            <label class="field-label" for="fewDaysWeight" style="margin-bottom:6px;display:block;">اولویت
-                                روزهای
-                                کمتر</label>
-                            <div class="range-row">
-                                <input aria-label="اولویت روزهای کمتر" class="range-input" id="fewDaysWeight"
-                                       max="10" min="0" type="range" value="3">
-                                <span class="range-val" id="fewDaysWeightVal">۳</span>
-                            </div>
-                        </div>
+                        <label class="check-row" for="fewDaysWeight">
+                            <input aria-label="اولویت روزهای کمتر" id="fewDaysWeight"
+                                   type="checkbox" checked><span>اولویت روزهای کمتر</span>
+                        </label>
                         <label class="check-row" for="spreadExams">
                             <input aria-label="ترجیح امتحانات در روزهای مختلف" id="spreadExams"
                                    type="checkbox"><span>ترجیح امتحانات در روزهای مختلف</span>
@@ -215,7 +209,6 @@
                                 <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet</option>
                                 <option value="openai/gpt-4o-mini">GPT-4o Mini</option>
                                 <option value="openai/gpt-4o">GPT-4o</option>
-                                <option value="deepseek/deepseek-chat">DeepSeek</option>
                             </select>
                         </div>
                         <div class="field-group" style="margin-top:4px;">

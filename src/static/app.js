@@ -223,12 +223,8 @@ async function openProfModal(name) {
     const needsFetch = apiKey && cached && cached.reviews && cached.reviews.length && !cached._fetched;
 
     if (needsFetch) {
-        if (cached && cached.reviews && cached.reviews.length) {
-            renderProfModalBody(body, {reviews: cached.reviews, summary: null});
-            body.insertAdjacentHTML('afterbegin', '<div class="loading-row" id="summary-loading"><svg class="ai-icon pulse" viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="12" r="4.5" fill="#888"/></svg><span>خلاصه هوش مصنوعی...</span></div>');
-        } else {
-            body.innerHTML = '<div class="loading-row"><span class="spinner"></span><span>در حال بارگذاری...</span></div>';
-        }
+        renderProfModalBody(body, {reviews: cached.reviews, summary: null});
+        body.insertAdjacentHTML('afterbegin', '<div class="loading-row"><svg class="ai-icon pulse" viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="12" r="4.5" fill="#888"/></svg><span>خلاصه هوش مصنوعی...</span></div>');
         document.getElementById('profModal').classList.add('open');
 
         try {
