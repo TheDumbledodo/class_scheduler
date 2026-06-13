@@ -181,7 +181,10 @@
                     <div style="padding-top:12px;display:flex;flex-direction:column;gap:10px;">
                         <div class="field-group">
                             <label class="field-label" for="topN">تعداد ترکیب‌های برتر</label>
-                            <input class="field-input" id="topN" max="50" min="1" type="number" value="5">
+                            <div class="range-row">
+                                <input class="range-input" id="topN" max="30" min="1" type="range" value="5">
+                                <span class="range-val" id="topNVal">۵</span>
+                            </div>
                         </div>
                         <div>
                             <label class="field-label" for="chainWeight" style="margin-bottom:6px;display:block;">کلاس‌های

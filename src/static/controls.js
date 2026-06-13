@@ -159,7 +159,11 @@ function bindStaticControls() {
 
     document.getElementById('fewDaysWeight').addEventListener('change', e => state.settings.fewDaysWeight = e.target.checked);
 
-    document.getElementById('topN').addEventListener('input', e => state.settings.top_n = parseInt(e.target.value) || 5);
+    document.getElementById('topN').addEventListener('input', e => {
+        state.settings.top_n = parseInt(e.target.value) || 5;
+
+        document.getElementById('topNVal').textContent = toPersian(e.target.value);
+    });
     document.getElementById('spreadExams').addEventListener('change', e => state.settings.spreadExams = e.target.checked);
 
     const aiModel = document.getElementById('aiModel');
