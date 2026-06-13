@@ -13,7 +13,8 @@ const state = {
         fewDaysWeight: 3,
         spreadExams: false,
         timeFrom: 7 * 60,
-        timeTo: 20 * 60
+        timeTo: 20 * 60,
+        model: 'deepseek/deepseek-chat'
     },
     profSummaries: {},
     snapshot: {},
@@ -175,6 +176,11 @@ function bindStaticControls() {
     document.getElementById('topN').addEventListener('input', e => state.settings.top_n = parseInt(e.target.value) || 5);
     document.getElementById('spreadExams').addEventListener('change', e => state.settings.spreadExams = e.target.checked);
 
+    const aiModel = document.getElementById('aiModel');
+    if (aiModel) {
+        aiModel.addEventListener('change', e => state.settings.model = e.target.value);
+    }
+
     document.querySelectorAll('.results-tab').forEach(tab => {
         tab.addEventListener('click', async () => {
             document.querySelectorAll('.results-tab').forEach(t => t.classList.remove('active'));
@@ -275,6 +281,15 @@ async function processUploadedFiles() {
             state.cachedCourses = data.courses || [];
             state.cachedGroups = data.groups || [];
             state.cachedProfessors = data.professors || [];
+            state.profSummaries = {};
+
+            for (const prof of state.cachedProfessors) {
+                state.profSummaries[prof.name] = {
+                    reviews: prof.reviews || [],
+                    summary: null,
+                    _fetched: false,
+                };
+            }
 
             applySnapshot(data.state || {});
             updateCounts();

@@ -13,7 +13,7 @@ from src.ai_summarizer import summarize_professor
 from src.course_parser import parse_courses_with_columns
 from src.course_scheduler import CourseScheduler
 from src.persian_utils import normalize_persian
-from src.professor_review_parser import load_all_professor_reviews_from_strings, extract_reviews_for_professor
+from src.professor_review_parser import load_all_professor_reviews_from_strings, extract_reviews_for_professor, strip_honorifics
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ALLOWED_EXTENSIONS = {'html'}
@@ -106,7 +106,7 @@ def get_course_professor(course):
             value = course.get(key)
 
             if value not in (None, ""):
-                return str(value).strip()
+                return strip_honorifics(str(value).strip())
 
     return None
 
@@ -467,6 +467,7 @@ async def api_professor_detail(name: str, request: Request):
         data = await get_request_data(request)
         prof_files = data.get("prof_files", [])
         api_key = data.get("api_key", "")
+        model = data.get("model", "deepseek/deepseek-chat")
 
         all_reviews = load_all_professor_reviews_from_strings({
             f["name"]: f["content"] for f in (prof_files or [])
@@ -475,8 +476,7 @@ async def api_professor_detail(name: str, request: Request):
         summary = None
 
         if api_key and revs:
-            review_texts = [r['review'] if isinstance(r, dict) else r for r in revs]
-            summary = await summarize_professor(review_texts, name, api_key=api_key)
+            summary = await summarize_professor(revs, name, api_key=api_key, model=model)
 
         return json_response({
             "name": name,
@@ -531,12 +531,7 @@ async def api_filter(request: Request):
                 course = filtered.get(cid, {})
                 sched = scheduler.class_schedules.get(cid)
                 exam = scheduler.exams.get(cid)
-                prof_name = None
-
-                for k in course:
-                    if "استاد" in k:
-                        prof_name = course[k]
-                        break
+                prof_name = get_course_professor(course)
                 item = {
                     "id": cid,
                     "class_id": get_course_class_id(course, cid),

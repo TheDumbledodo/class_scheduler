@@ -48,10 +48,6 @@ function formatTime(min) {
     return toPersian(t);
 }
 
-function professorNameMatches(query, candidate) {
-    return (query || '').trim() === (candidate || '').trim();
-}
-
 function normalizeReview(review) {
     if (typeof review === 'string') {
         const courseMatch = review.match(/درس\s*:\s*([^|]+)/);

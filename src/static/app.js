@@ -61,36 +61,6 @@ function renderComboCard(combo, idx) {
             </div>`;
 }
 
-function getProfessorScopes() {
-    const scopes = new Set(Object.keys(state.profSummaries || {}));
-    state.filters
-        .filter(f => f.professor)
-        .forEach(f => scopes.add(f.professor));
-
-    return [...scopes].filter(Boolean);
-}
-
-function resolveProfessorSummaryFromState(name) {
-    const summaries = state.profSummaries || {};
-    if (summaries[name]) {
-        return {name, value: summaries[name]};
-    }
-
-    for (const [key, value] of Object.entries(summaries)) {
-        if (professorNameMatches(name, key)) {
-            return {name: key, value};
-        }
-    }
-    return null;
-}
-
-function filterProfessorsByScope(professors) {
-    const scopes = getProfessorScopes();
-    if (!scopes.length) return professors;
-
-    return professors.filter(prof => scopes.some(scope => professorNameMatches(scope, prof.name)));
-}
-
 function formatGroupSubtitle(group, mode) {
     if (mode === 'professors') {
         return group.name || group.professor_name || 'استاد نامشخص';
@@ -257,30 +227,50 @@ async function openProfModal(name) {
     document.getElementById('profModal').classList.add('open');
 
     const apiKey = document.getElementById('apiKey').value.trim();
-    const local = resolveProfessorSummaryFromState(name);
-    if (local) {
+    const cached = state.profSummaries[name];
+    const needsFetch = apiKey && (!cached || !cached._fetched);
+
+    if (cached) {
         renderProfModalBody(body, {
-            reviews: local.value.reviews || [],
-            summary: null
+            reviews: cached.reviews || [],
+            summary: cached.summary || null
         });
     }
 
-    if (apiKey || !local) {
+    if (needsFetch) {
+        if (cached && cached.reviews && cached.reviews.length) {
+            body.insertAdjacentHTML('afterbegin', '<div class="loading-row" id="summary-loading"><svg viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="12" r="6" fill="#4a6cf7"/></svg><span>خلاصه هوش مصنوعی در حال تولید...</span></div>');
+        }
         try {
             const resp = await fetch(`/api/professor/${encodeURIComponent(name)}`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
                     prof_files: state.reviewFiles,
-                    api_key: apiKey || ''
+                    api_key: apiKey || '',
+                    model: state.settings.model
                 })
             });
             const data = await resp.json();
+
+            state.profSummaries[name] = {
+                reviews: data.reviews || [],
+                summary: data.summary || null,
+                _fetched: true
+            };
             renderProfModalBody(body, data);
+
         } catch (err) {
-            if (!local) {
-                body.innerHTML = '<div style="color:var(--bad)">خطا در دریافت اطلاعات</div>';
+            state.profSummaries[name] = {
+                reviews: [],
+                summary: null,
+                _fetched: true
+            };
+
+            if (local) {
+                return;
             }
+            body.innerHTML = '<div style="color:var(--bad)">خطا در دریافت اطلاعات</div>';
         }
     }
 }
@@ -290,11 +280,9 @@ function renderProfModalBody(body, data) {
     const summary = data.summary;
 
     body.innerHTML = `
-            <div style="color:var(--text3);margin-bottom:12px;">${toPersian(reviews.length)} نظر برای این استاد ثبت شده است.</div>
+            ${summary ? `<div class="ai-summary"><div class="ai-label"><svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align:middle;margin-inline-end:4px"><circle cx="12" cy="12" r="6" fill="#4a6cf7"/></svg>خلاصه هوش مصنوعی</div><div class="ai-text">${escapeHtml(summary)}</div></div>` : ''}
 
-            ${summary ? `<div class="ai-summary"><div class="ai-label">خلاصه هوش مصنوعی</div><div class="ai-text">${escapeHtml(summary)}</div></div>` : ''}
-
-            ${reviews.length ? `<div class="section-label" style="margin-bottom:8px;">نظرات دانشجویان</div>
+            ${reviews.length ? `<div class="section-label" style="margin-bottom:8px;color:#000">نظرات دانشجویان</div>
             <div class="reviews-list">${reviews.map(r => `
                 <div class="review-item">
                     <div class="review-header">

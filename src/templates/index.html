@@ -209,8 +209,18 @@
                                    type="checkbox"><span>ترجیح امتحانات در روزهای مختلف</span>
                         </label>
                         <div class="field-group" style="margin-top:4px;">
-                            <label class="field-label" for="apiKey">کلید API (OpenRouter) — برای خلاصه استاد</label>
-                            <input class="field-input" id="apiKey" placeholder="sk-or-..." type="password">
+                            <label class="field-label" for="aiModel">مدل هوش مصنوعی</label>
+                            <select class="model-select" id="aiModel">
+                                <option value="deepseek/deepseek-chat" selected>DeepSeek Chat</option>
+                                <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet</option>
+                                <option value="openai/gpt-4o-mini">GPT-4o Mini</option>
+                                <option value="openai/gpt-4o">GPT-4o</option>
+                                <option value="deepseek/deepseek-chat">DeepSeek</option>
+                            </select>
+                        </div>
+                        <div class="field-group" style="margin-top:4px;">
+                            <label class="field-label" for="apiKey">کلید API (OpenRouter)</label>
+                            <input class="field-input" id="apiKey" placeholder="sk-or-..." type="password" dir="ltr">
                         </div>
                     </div>
                 </div>
