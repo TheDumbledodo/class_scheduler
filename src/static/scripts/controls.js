@@ -302,12 +302,15 @@ async function processUploadedFiles() {
     }
 }
 
-function addCourseFilter(courseName) {
+async function addCourseFilter(courseName) {
     if (state.filters.find(f => f.course_name === courseName)) return;
     state.filters.push({course_name: courseName, professor: ''});
 
     renderCourseFilterRows();
     updateRunButtonState();
+    updateCounts();
+
+    await renderContent();
 }
 
 function renderCourseFilterRows() {
@@ -348,10 +351,13 @@ function renderCourseFilterRows() {
     });
 
     container.querySelectorAll('.course-filter-prof-select').forEach(sel => {
-        sel.addEventListener('change', e => {
+        sel.addEventListener('change', async e => {
             const idx = parseInt(e.target.dataset.idx);
             state.filters[idx].professor = e.target.value;
             e.target.classList.toggle('has-value', !!e.target.value);
+
+            updateCounts();
+            await renderContent();
         });
     });
 }

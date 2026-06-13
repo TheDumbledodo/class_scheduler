@@ -110,6 +110,17 @@ html, body {
     height: 16px;
 }
 
+.icon-btn.small {
+    width: 22px;
+    height: 22px;
+    border: none;
+}
+
+.icon-btn.small svg {
+    width: 13px;
+    height: 13px;
+}
+
 .sr-only {
     position: absolute;
     width: 1px;

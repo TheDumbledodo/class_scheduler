@@ -21,17 +21,7 @@
                                             viewBox="0 0 24 24"
                                             width="18"><path
                     d="M22 10l-10-5-10 5 10 5 10-5z"/><path d="M6 12v5c0 1.1 2.7 3 6 3s6-1.9 6-3v-5"/></svg>برنامه‌ریز کلاسی</span>
-            <div class="topbar-actions">
-                <button class="icon-btn" id="clearAll" title="پاک کردن همه">
-                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <polyline points="3 6 5 6 21 6"/>
-                        <path d="M19 6l-1 14H6L5 6"/>
-                        <path d="M10 11v6"/>
-                        <path d="M14 11v6"/>
-                        <path d="M9 6V4h6v2"/>
-                    </svg>
-                </button>
-            </div>
+
         </div>
         <div class="sidebar-scroll">
             <div class="sidebar-section">
@@ -67,7 +57,18 @@
                 <div class="file-list" id="reviewFileList"></div>
             </div>
             <div class="sidebar-section">
-                <div class="section-label">دروس انتخابی</div>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                    <div class="section-label" style="margin-bottom:0">دروس انتخابی</div>
+                    <button class="icon-btn small" id="clearAll" title="پاک کردن همه">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <polyline points="3 6 5 6 21 6"/>
+                            <path d="M19 6l-1 14H6L5 6"/>
+                            <path d="M10 11v6"/>
+                            <path d="M14 11v6"/>
+                            <path d="M9 6V4h6v2"/>
+                        </svg>
+                    </button>
+                </div>
                 <div class="filter-dropdown">
                     <label class="sr-only" for="courseFilter">افزودن درس</label>
                     <select aria-label="افزودن درس" class="filter-select" id="courseFilter">
