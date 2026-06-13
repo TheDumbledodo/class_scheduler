@@ -197,16 +197,10 @@ function bindStaticControls() {
     });
 
     document.getElementById('clearAll').addEventListener('click', async () => {
-        state.courseFiles = [];
-        state.reviewFiles = [];
         state.filters = [];
         state.combinations = [];
-        state.snapshot = {};
-        state.cachedCourses = [];
-        state.cachedProfessors = [];
-        state.profSummaries = {};
+        state.schedulerRun = false;
 
-        renderFileLists();
         renderCourseFilterRows();
         updateRunButtonState();
         await renderContent();
@@ -409,6 +403,7 @@ async function runScheduler() {
         });
 
         document.getElementById('combosCount').textContent = toPersian(results.length);
+        updateCounts();
 
         document.querySelectorAll('.results-tab').forEach(t => t.classList.remove('active'));
         document.querySelector('[data-tab="combos"]').classList.add('active');
@@ -430,7 +425,8 @@ async function runScheduler() {
 }
 
 function updateCounts() {
-    document.getElementById('coursesCount').textContent = toPersian(state.cachedCourses.length);
+    const courses = state.cachedCourses.filter(isFiltered);
+    document.getElementById('coursesCount').textContent = toPersian(courses.length);
 
     const profs = (state.cachedProfessors || []).filter(p => p.classes?.some(c => isFiltered(c)));
     document.getElementById('profsCount').textContent = toPersian(profs.length);
