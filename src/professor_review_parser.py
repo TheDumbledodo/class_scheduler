@@ -1,6 +1,5 @@
 import re
 from collections import defaultdict
-from rapidfuzz import fuzz
 
 from bs4 import BeautifulSoup
 

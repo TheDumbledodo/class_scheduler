@@ -648,7 +648,8 @@ html, body {
 }
 
 .course-exam {
-    font-size: 11px;
+    font-size: 9px;
+    line-height: 1;
     color: var(--text3);
     margin-top: 2px;
     text-align: right;

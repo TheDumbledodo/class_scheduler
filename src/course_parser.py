@@ -66,7 +66,7 @@ def parse_value(value):
         return int(value)
 
     exam_schedule = re.match(
-        r"(\d{4}/\d{2}/\d{2}) از (\d{2}:\d{2}) تا (\d{2}:\d{2})",
+        r"(\d{4}/\d{2}/\d{2})\s*از\s*(\d{2}:\d{2})\s*(?:تا|الی)\s*(\d{2}:\d{2})",
         value
     )
     if exam_schedule:

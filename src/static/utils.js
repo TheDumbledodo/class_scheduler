@@ -1,20 +1,41 @@
 const WEEKDAYS = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه'];
 
+const JALALI_MONTHS = [
+    'فروردین',
+    'اردیبهشت',
+    'خرداد',
+    'تیر',
+    'مرداد',
+    'شهریور',
+    'مهر',
+    'آبان',
+    'آذر',
+    'دی',
+    'بهمن',
+    'اسفند'
+];
+
 function toPersian(n) {
     return String(n).replace(/[0-9]/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
 }
 
-function toPersianDate(dateStr) {
-    if (!dateStr) return '';
-    const m = dateStr.match(/(\d{2})\.(\d{2})\.(\d{4})/);
+function formatJalaliParts(jy, jm, jd) {
+    return `${toPersian(jd)} ${JALALI_MONTHS[jm - 1]} ${toPersian(jy)}`;
+}
 
-    if (!m) return dateStr;
-    let d = parseInt(m[1]), mon = parseInt(m[2]), y = parseInt(m[3]);
-
+function gregorianToJalali(gy, gm, gd) {
     const gdm = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
-    const gy2 = mon > 2 ? y + 1 : y;
+    const gy2 = gm > 2 ? gy + 1 : gy;
 
-    let days = 355666 + 365 * y + Math.floor((gy2 + 3) / 4) - Math.floor((gy2 + 99) / 100) + Math.floor((gy2 + 399) / 400) + d + gdm[mon - 1];
+    let days =
+        355666 +
+        365 * gy +
+        Math.floor((gy2 + 3) / 4) -
+        Math.floor((gy2 + 99) / 100) +
+        Math.floor((gy2 + 399) / 400) +
+        gd +
+        gdm[gm - 1];
+
     let jy = -1595 + 33 * Math.floor(days / 12053);
 
     days %= 12053;
@@ -25,11 +46,42 @@ function toPersianDate(dateStr) {
         jy += Math.floor((days - 1) / 365);
         days = (days - 1) % 365;
     }
-    let jm = days < 186 ? 1 + Math.floor(days / 31) : 7 + Math.floor((days - 186) / 30);
-    let jd = 1 + (days < 186 ? days % 31 : (days - 186) % 30);
 
-    const months = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
-    return `${toPersian(jd)} ${months[jm - 1]} ${toPersian(jy)}`;
+    const jm = days < 186
+        ? 1 + Math.floor(days / 31)
+        : 7 + Math.floor((days - 186) / 30);
+
+    const jd = 1 + (days < 186 ? days % 31 : (days - 186) % 30);
+
+    return {jy, jm, jd};
+}
+
+function toPersianDate(dateStr) {
+    if (!dateStr) return '';
+
+    const m = dateStr.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+    if (!m) return dateStr;
+
+    const {jy, jm, jd} = gregorianToJalali(
+        Number(m[3]),
+        Number(m[2]),
+        Number(m[1])
+    );
+
+    return formatJalaliParts(jy, jm, jd);
+}
+
+function formatJalaliDate(dateStr) {
+    if (!dateStr) return '';
+
+    const m = dateStr.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
+    if (!m) return dateStr;
+
+    return formatJalaliParts(
+        Number(m[1]),
+        Number(m[2]),
+        Number(m[3])
+    );
 }
 
 function escapeHtml(value) {
@@ -45,7 +97,7 @@ function formatTime(min) {
     const h = Math.floor(min / 60);
     const m = min % 60;
     const t = `${h}:${String(m).padStart(2, '0')}`;
-    return toPersian(t);
+    return toPersian(t).replace(/:۰۰$/, '');
 }
 
 function normalizeReview(review) {
@@ -119,4 +171,17 @@ function courseMatchesFilter(course, row) {
     if (prof && (course.professor || '') !== prof) return false;
 
     return !!(cName || prof);
+}
+
+function getActiveFilters() {
+    return state.filters.filter(f => f.course_name).map(f => ({
+        course_name: f.course_name,
+        professor: f.professor || ''
+    }));
+}
+
+function isFiltered(course) {
+    const filters = getActiveFilters();
+
+    return !filters.length || filters.some(r => courseMatchesFilter(course, r));
 }

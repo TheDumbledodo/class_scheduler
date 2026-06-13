@@ -13,7 +13,8 @@ from src.ai_summarizer import summarize_professor
 from src.course_parser import parse_courses_with_columns
 from src.course_scheduler import CourseScheduler
 from src.persian_utils import normalize_persian
-from src.professor_review_parser import load_all_professor_reviews_from_strings, extract_reviews_for_professor, strip_honorifics
+from src.professor_review_parser import load_all_professor_reviews_from_strings, extract_reviews_for_professor, \
+    strip_honorifics
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ALLOWED_EXTENSIONS = {'html'}
@@ -495,7 +496,6 @@ async def api_filter(request: Request):
         prof_files = data.get("prof_files", [])
         filters_list = data.get("filters", [])
         settings = data.get("settings", {})
-        api_key = data.get("api_key", "")
 
         time_from = settings.get("time_from")
         time_to = settings.get("time_to")

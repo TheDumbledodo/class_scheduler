@@ -29,7 +29,7 @@ function renderComboCard(combo, idx) {
 
     const cells = combo.combo.map(c => {
         const classTime = c.class_time ? `${WEEKDAYS[c.class_time.weekday]} ${formatTime(c.class_time.start)}–${formatTime(c.class_time.end)}` : '—';
-        const exam = c.exam ? `${c.exam.date} ${formatTime(c.exam.start)}–${formatTime(c.exam.end)}` : '—';
+        const exam = c.exam ? `${formatJalaliDate(c.exam.date)} ساعت ${formatTime(c.exam.start)} تا ${formatTime(c.exam.end)}` : '—';
 
         return `
                     <div>
@@ -69,7 +69,7 @@ function renderGroupCard(group, mode) {
 
     const rows = sortCourseRowItems(group.items).map(item => {
         const classTime = item.class_time ? `${WEEKDAYS[item.class_time.weekday]} ${formatTime(item.class_time.start)}–${formatTime(item.class_time.end)}` : '—';
-        const exam = item.exam ? `${item.exam.date} ${formatTime(item.exam.start)}–${formatTime(item.exam.end)}` : '—';
+        const exam = item.exam ? `${formatJalaliDate(item.exam.date)} ساعت ${formatTime(item.exam.start)} تا ${formatTime(item.exam.end)}` : '—';
 
         if (mode === 'professors') {
             return `
@@ -110,13 +110,15 @@ function renderGroupCard(group, mode) {
 
 async function fetchAndRenderProfessors(area) {
     const professors = state.cachedProfessors || [];
-    document.getElementById('profsCount').textContent = toPersian(professors.length);
+    const shown = professors.filter(p => p.classes?.some(c => isFiltered(c)));
 
-    if (!professors.length) {
+    document.getElementById('profsCount').textContent = toPersian(shown.length);
+
+    if (!shown.length) {
         area.innerHTML = emptyStateHtml('هیچ استادی یافت نشد');
         return;
     }
-    area.innerHTML = `<div class="combo-grid">${professors.map(prof => renderProfessorReviewCard(prof)).join('')}</div>`;
+    area.innerHTML = `<div class="combo-grid">${shown.map(prof => renderProfessorReviewCard(prof)).join('')}</div>`;
     bindProfChips(area);
 }
 
@@ -126,16 +128,7 @@ async function fetchAndRenderCourses(area) {
         return;
     }
 
-    const filters = state.filters.map(f => ({
-        course_name: f.course_name,
-        professor: f.professor || ''
-    }));
-
-    const hasFilters = filters.some(f => f.course_name);
-    const filtered = hasFilters
-        ? state.cachedCourses.filter(c => filters.some(r => courseMatchesFilter(c, r)))
-        : state.cachedCourses;
-
+    const filtered = state.cachedCourses.filter(isFiltered);
     const groups = groupCourseItems(filtered);
     document.getElementById('coursesCount').textContent = toPersian(filtered.length);
 

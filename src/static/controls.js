@@ -23,8 +23,6 @@ const state = {
     cachedProfessors: []
 };
 
-
-
 const uploadZone = document.getElementById('uploadZone');
 const fileInput = document.getElementById('fileInput');
 const reviewUploadZone = document.getElementById('reviewUploadZone');
@@ -276,6 +274,9 @@ async function processUploadedFiles() {
             applySnapshot(data.state || {});
             updateCounts();
 
+            fileInput.value = '';
+            reviewFileInput.value = '';
+
             await renderContent();
             return
         }
@@ -426,7 +427,10 @@ async function runScheduler() {
 
 function updateCounts() {
     document.getElementById('coursesCount').textContent = toPersian(state.cachedCourses.length);
-    document.getElementById('profsCount').textContent = toPersian(state.cachedProfessors.length);
+
+    const profs = (state.cachedProfessors || []).filter(p => p.classes?.some(c => isFiltered(c)));
+    document.getElementById('profsCount').textContent = toPersian(profs.length);
+
     document.getElementById('combosCount').textContent = toPersian(state.combinations.length);
 }
 
