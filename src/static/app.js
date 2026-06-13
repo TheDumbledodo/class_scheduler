@@ -10,10 +10,6 @@ async function renderContent() {
 }
 
 function renderCombos(area) {
-    if (state.lastError) {
-        area.innerHTML = errorStateHtml(state.lastError);
-        return;
-    }
     if (!state.combinations.length) {
         area.innerHTML = emptyStateHtml(state.schedulerRun ? 'هیچ ترکیبی پیدا نشد' : 'هنوز ترکیبی پیدا نشده');
         return;
@@ -113,7 +109,7 @@ function renderGroupCard(group, mode) {
 }
 
 async function fetchAndRenderProfessors(area) {
-    const professors = filterProfessorsByScope(state.cachedProfessors || []);
+    const professors = state.cachedProfessors || [];
     document.getElementById('profsCount').textContent = toPersian(professors.length);
 
     if (!professors.length) {
@@ -222,25 +218,19 @@ async function openProfModal(name) {
     document.getElementById('profModalTitle').textContent = name;
 
     const body = document.getElementById('profModalBody');
-    body.innerHTML = '<div class="loading-row"><span class="spinner"></span><span>در حال بارگذاری...</span></div>';
-
-    document.getElementById('profModal').classList.add('open');
-
     const apiKey = document.getElementById('apiKey').value.trim();
     const cached = state.profSummaries[name];
-    const needsFetch = apiKey && (!cached || !cached._fetched);
-
-    if (cached) {
-        renderProfModalBody(body, {
-            reviews: cached.reviews || [],
-            summary: cached.summary || null
-        });
-    }
+    const needsFetch = apiKey && cached && cached.reviews && cached.reviews.length && !cached._fetched;
 
     if (needsFetch) {
         if (cached && cached.reviews && cached.reviews.length) {
-            body.insertAdjacentHTML('afterbegin', '<div class="loading-row" id="summary-loading"><svg viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="12" r="6" fill="#4a6cf7"/></svg><span>خلاصه هوش مصنوعی در حال تولید...</span></div>');
+            renderProfModalBody(body, {reviews: cached.reviews, summary: null});
+            body.insertAdjacentHTML('afterbegin', '<div class="loading-row" id="summary-loading"><svg class="ai-icon pulse" viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="12" r="4.5" fill="#888"/></svg><span>خلاصه هوش مصنوعی...</span></div>');
+        } else {
+            body.innerHTML = '<div class="loading-row"><span class="spinner"></span><span>در حال بارگذاری...</span></div>';
         }
+        document.getElementById('profModal').classList.add('open');
+
         try {
             const resp = await fetch(`/api/professor/${encodeURIComponent(name)}`, {
                 method: 'POST',
@@ -252,27 +242,27 @@ async function openProfModal(name) {
                 })
             });
             const data = await resp.json();
+            const revs = (data.reviews && data.reviews.length) ? data.reviews : (cached?.reviews || []);
 
             state.profSummaries[name] = {
-                reviews: data.reviews || [],
+                reviews: revs,
                 summary: data.summary || null,
                 _fetched: true
             };
-            renderProfModalBody(body, data);
+            renderProfModalBody(body, {reviews: revs, summary: data.summary || null});
 
         } catch (err) {
             state.profSummaries[name] = {
-                reviews: [],
+                reviews: cached?.reviews || [],
                 summary: null,
                 _fetched: true
             };
-
-            if (local) {
-                return;
-            }
-            body.innerHTML = '<div style="color:var(--bad)">خطا در دریافت اطلاعات</div>';
+            renderProfModalBody(body, cached || {reviews: [], summary: null});
         }
+        return
     }
+    document.getElementById('profModal').classList.add('open');
+    renderProfModalBody(body, cached || {reviews: [], summary: null});
 }
 
 function renderProfModalBody(body, data) {
@@ -280,7 +270,7 @@ function renderProfModalBody(body, data) {
     const summary = data.summary;
 
     body.innerHTML = `
-            ${summary ? `<div class="ai-summary"><div class="ai-label"><svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align:middle;margin-inline-end:4px"><circle cx="12" cy="12" r="6" fill="#4a6cf7"/></svg>خلاصه هوش مصنوعی</div><div class="ai-text">${escapeHtml(summary)}</div></div>` : ''}
+            ${summary ? `<div class="ai-summary"><div class="ai-label"><svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align:middle;margin-inline-end:4px"><circle cx="12" cy="12" r="4.5" fill="#888"/></svg>خلاصه هوش مصنوعی</div><div class="ai-text">${escapeHtml(summary)}</div></div>` : ''}
 
             ${reviews.length ? `<div class="section-label" style="margin-bottom:8px;color:#000">نظرات دانشجویان</div>
             <div class="reviews-list">${reviews.map(r => `
@@ -291,7 +281,7 @@ function renderProfModalBody(body, data) {
                     </div>
                     ${r.text ? `<div class="review-text">${escapeHtml(r.text).replace(/\n/g, '<br>')}</div>` : ''}
                     ${r.reactions && r.reactions.length ? `<div class="review-reactions">${r.reactions.map(rt => `<span class="reaction-badge">${rt.emoji}\uFE0F ${toPersian(rt.count)}</span>`).join('')}</div>` : ''}
-                </div>`).join('')}</div>` : ''}
+                </div>`).join('')}</div>` : !summary ? '<div class="review-item"><div class="review-text">نظری ثبت نشده است.</div></div>' : ''}
         `;
 }
 

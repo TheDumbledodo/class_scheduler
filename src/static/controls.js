@@ -4,7 +4,6 @@ const state = {
     combinations: [],
     activeTab: 'courses',
     processing: false,
-    lastError: null,
     schedulerRun: false,
     settings: {
         top_n: 5,
@@ -54,11 +53,6 @@ function applySnapshot(snapshot) {
     populateFilterDropdowns(state.snapshot);
     renderFileLists();
 
-    if (parsingErrors.length) {
-        state.lastError = parsingErrors.join('\n');
-    } else if (state.lastError && !state.combinations.length) {
-        state.lastError = null;
-    }
     document.getElementById('coursesCount').textContent = toPersian(state.snapshot.course_count || 0);
 }
 
@@ -359,7 +353,6 @@ async function runScheduler() {
         return;
     }
     if (state.settings.timeFrom >= state.settings.timeTo) {
-        state.lastError = 'محدوده زمانی اشتباه';
         state.combinations = [];
         state.schedulerRun = true;
         state.activeTab = 'combos';
@@ -406,17 +399,15 @@ async function runScheduler() {
 
         const results = await resp.json();
         if (results.error) {
-            state.lastError = results.error;
             state.combinations = [];
             state.schedulerRun = true;
             state.activeTab = 'combos';
+
             await renderContent();
             return;
         }
 
-        state.lastError = null;
         state.schedulerRun = true;
-
         state.combinations = results;
         state.profSummaries = {};
 
@@ -433,7 +424,6 @@ async function runScheduler() {
         await renderContent();
 
     } catch (err) {
-        state.lastError = err.message;
         state.combinations = [];
         state.schedulerRun = true;
         state.activeTab = 'combos';
