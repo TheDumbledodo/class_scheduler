@@ -11,6 +11,7 @@ const state = {
         gapThreshold: 45,
         fewDaysWeight: true,
         spreadExams: false,
+        ignoreExamConflicts: false,
         timeFrom: 7 * 60,
         timeTo: 20 * 60,
         model: 'deepseek/deepseek-chat'
@@ -165,6 +166,7 @@ function bindStaticControls() {
         document.getElementById('topNVal').textContent = toPersian(e.target.value);
     });
     document.getElementById('spreadExams').addEventListener('change', e => state.settings.spreadExams = e.target.checked);
+    document.getElementById('ignoreExamConflicts').addEventListener('change', e => state.settings.ignoreExamConflicts = e.target.checked);
 
     const aiModel = document.getElementById('aiModel');
     if (aiModel) {
@@ -242,8 +244,23 @@ async function handleFiles(fileList, type) {
 }
 
 async function processUploadedFiles() {
-    if (!state.courseFiles.length && !state.reviewFiles.length)
+    if (!state.courseFiles.length && !state.reviewFiles.length) {
+        state.cachedCourses = [];
+        state.cachedProfessors = [];
+        state.combinations = [];
+        state.filters = [];
+        state.schedulerRun = false;
+        state.profSummaries = {};
+        state.snapshot = {};
+
+        renderFileLists();
+        renderCourseFilterRows();
+        updateRunButtonState();
+        await renderContent();
+
+        updateCounts();
         return;
+    }
 
     try {
         const resp = await fetch('/api/process', {
@@ -319,10 +336,14 @@ function renderCourseFilterRows() {
     }).join('');
 
     container.querySelectorAll('.btn-remove-filter').forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', async () => {
             state.filters.splice(parseInt(btn.dataset.idx), 1);
+
             renderCourseFilterRows();
             updateRunButtonState();
+            updateCounts();
+
+            await renderContent();
         });
     });
 
@@ -366,6 +387,7 @@ async function runScheduler() {
         gap_threshold: state.settings.gapThreshold,
         few_days_weight: state.settings.fewDaysWeight ? 3 : 0,
         spread_exams: state.settings.spreadExams,
+        ignore_exam_conflicts: state.settings.ignoreExamConflicts,
         time_from: state.settings.timeFrom,
         time_to: state.settings.timeTo,
         allowed_days: [...state.allowedDays]

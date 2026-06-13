@@ -610,7 +610,7 @@ html, body {
 }
 
 .course-name {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     color: var(--text);
     background: transparent;
@@ -621,7 +621,7 @@ html, body {
     line-height: 1.4;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 12px;
 }
 
 .course-name:hover {
@@ -650,14 +650,19 @@ html, body {
 }
 
 .course-count {
+    background: var(--accent);
+    color: #fff;
     font-size: 11px;
-    color: var(--text3);
-    font-weight: 500;
-    white-space: nowrap;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 8px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
 }
 
 .prof-chip {
-    font-size: 11px;
+    font-size: 9px;
     padding: 2px 8px;
     background: var(--tag-bg);
     border-radius: 20px;

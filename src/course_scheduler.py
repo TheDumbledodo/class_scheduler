@@ -215,6 +215,8 @@ class CourseScheduler:
         return score
 
     def has_conflict(self, combo):
+        ignore_conflicts = self.settings.get("ignore_exam_conflicts", False)
+
         for a, b in combinations(combo, 2):
             if self.schedule_overlaps(self.class_schedules[a], self.class_schedules[b]):
                 return True
@@ -222,7 +224,7 @@ class CourseScheduler:
             exam_a = self.exams.get(a)
             exam_b = self.exams.get(b)
 
-            if exam_a and exam_b and self.exam_overlaps(exam_a, exam_b):
+            if not ignore_conflicts and exam_a and exam_b and self.exam_overlaps(exam_a, exam_b):
                 return True
 
         return False

@@ -101,7 +101,7 @@ function renderGroupCard(group, mode) {
                 <div class="combo-card-header">
                     <div class="course-name">
                         <span>${escapeHtml(subtitle)}</span>
-                        <span class="course-count">(${toPersian(group.item_count || 0)} مورد)</span>
+                        <span class="course-count">${toPersian(group.item_count || 0)} مورد</span>
                     </div>
                 </div>
                 <div class="combo-body">${rows}</div>
