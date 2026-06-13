@@ -1,5 +1,6 @@
 import re
 from collections import defaultdict
+from rapidfuzz import fuzz
 
 from bs4 import BeautifulSoup
 
@@ -176,9 +177,6 @@ def load_all_professor_reviews_from_strings(files: dict[str, str]) -> dict[str, 
                 all_reviews.setdefault(key, []).append(entry)
 
     return all_reviews
-
-
-from rapidfuzz import fuzz
 
 
 def extract_reviews_for_professor(all_reviews: dict[str, list], name: str) -> list:
