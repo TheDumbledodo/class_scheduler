@@ -194,26 +194,6 @@ class CourseScheduler:
 
         return score
 
-    def get_chain_score(self, combo, gap_threshold=45):
-        score = 0
-
-        for i, cid_i in enumerate(combo):
-            s_i = self.class_schedules[cid_i]
-
-            for j in range(i + 1, len(combo)):
-                cid_j = combo[j]
-                s_j = self.class_schedules[cid_j]
-
-                if s_i["weekday"] != s_j["weekday"]:
-                    continue
-
-                gap = abs(s_j["start"] - s_i["end"])
-
-                if gap <= gap_threshold:
-                    score += 1
-
-        return score
-
     def has_conflict(self, combo):
         ignore_conflicts = self.settings.get("ignore_exam_conflicts", False)
 

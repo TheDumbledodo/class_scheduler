@@ -58,15 +58,6 @@ class TestCourseScheduler(unittest.TestCase):
         self.scheduler.class_schedules[2]["end"] = 570
         self.assertTrue(self.scheduler.has_conflict((1, 2)))
 
-    def test_get_chain_score(self):
-        combo = (1, 2)
-        score = self.scheduler.get_chain_score(combo)
-        self.assertEqual(score, 1)
-
-        combo2 = (1, 3)
-        score2 = self.scheduler.get_chain_score(combo2)
-        self.assertEqual(score2, 0)
-
     def test_sort_combo(self):
         combo = (3, 1, 2, 4)
         sorted_combo = self.scheduler.sort_combo(combo)

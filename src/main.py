@@ -1,9 +1,7 @@
 import os
-import re
 import traceback
 from collections import defaultdict
 
-import unicodedata
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -28,14 +26,6 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-def secure_filename(filename: str | bytes):
-    filename = os.fsdecode(os.path.basename(filename)).strip()
-    filename = unicodedata.normalize("NFKD", filename)
-    filename = re.sub(r"[^A-Za-z0-9._\-\u0600-\u06FF]+", "_", filename)
-    filename = filename.strip("._")
-    return filename or "upload.html"
-
-
 def json_response(content, status_code=200):
     return JSONResponse(content=content, status_code=status_code)
 
@@ -53,13 +43,11 @@ def parse_courses_from_files(course_files):
     parsing_errors = []
 
     for f in (course_files or []):
-        raw_name = f.get("name", "unknown.html")
+        name = f.get("name", "unknown.html")
         content = f.get("content", "")
 
-        if not content or not allowed_file(raw_name):
+        if not content or not allowed_file(name):
             continue
-
-        name = secure_filename(raw_name)
 
         try:
             _, courses = parse_courses_with_columns(content)
